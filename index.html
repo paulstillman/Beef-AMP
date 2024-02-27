@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <script src="https://unpkg.com/jspsych@7.3.3"></script>
+  <script src="https://unpkg.com/@jspsych/plugin-instructions@1.1.4"></script>
+  <script src="https://unpkg.com/@jspsych/plugin-html-keyboard-response@1.1.2"></script>
+  <script src="https://unpkg.com/@jspsych/plugin-image-keyboard-response@1.1.2"></script>
+  <script src="https://unpkg.com/@jspsych/plugin-image-keyboard-response@1.1.2"></script>
+  <script src="https://unpkg.com/@jspsych/plugin-html-button-response@1.1.2"></script>
+  <script src="https://unpkg.com/@jspsych/plugin-fullscreen@1.2.0"></script>
+  <script src="https://unpkg.com/@jspsych-contrib/plugin-pipe"></script>
+    <!--<script src="https://unpkg.com/@jspsych/extension-mouse-tracking@1.0.2"></script>-->
+  <script src="./jsFiles/plugin-html-button-response-pes.js"></script>
+  <script src="./jsFiles/extension-mouse-tracking-pes.js"></script>
+  <script src="https://unpkg.com/@jspsych/plugin-preload@1.1.2"></script>
+  <link href="https://unpkg.com/jspsych@7.3.3/css/jspsych.css" rel="stylesheet" type="text/css" />
+  <link href="./css/mt.css" rel="stylesheet" type="text/css"></link>
+  <title>Spinner</title>
+</head>
+  <body>
+      
+      <!--<div id="top_left_text_div" class="bordered_text_box" style="float: left; margin:25px">
+      </div>
+      <div id="top_right_text_div" class="bordered_text_box" style="float: right; margin:25px">
+      </div>-->
+
+
+
+
+      <!--<script>
+        const jsPsych = initJsPsych({
+          on_finish: function() {
+            jsPsych.data.displayData();
+          }
+        });
+
+        // Define a function to create the bounded rectangle
+        function createBoundedRectangle() {
+          var canvas = document.createElement("canvas");
+          canvas.className = "canvas";
+          canvas.width = 400;
+          canvas.height = 300;
+
+          var ctx = canvas.getContext("2d");
+          ctx.fillStyle = "blue";
+          ctx.fillRect(50, 50, 300, 200); // Adjust the coordinates and size as needed
+          return canvas;
+        }
+
+        var displayRectangleTrial = {
+          type: jsPsychImageKeyboardResponse,
+          stimulus: function() {
+            var canvas = createBoundedRectangle();
+            return canvas.outerHTML;
+          },
+          choices: 32 // Prevent keyboard input
+        };
+        timeline = [];
+
+        timeline.push(displayRectangleTrial);
+
+            
+        // Run the experiment
+        jsPsych.run(timeline);
+      </script>-->
+      
+      <script src="./jsFiles/exp.js"></script>
+  </body>
+</html>
+
+
+
