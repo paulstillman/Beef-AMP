@@ -110,18 +110,27 @@ instr_block1 = {
 timeline.push(instr_block1)
 */
 
-
-targets = jsPsych.randomization.sampleWithoutReplacement(all_targets, 6)
-console.log(targets)
+num_array = Array.from(Array(200).keys()).map(v=> v+1)
+target_nums = jsPsych.randomization.sampleWithoutReplacement(num_array, 12)
 
 const prime_list = [
-  { stimulus: './img/burgers/2patties_solo.jpeg', stim_type: 'beef_burger_1' },
+  { stimulus: './img/burgers/2patties_solo.jpeg', prime: './img/targets/pic1.png', stim_type: 'beef_burger_1' },
   { stimulus: './img/burgers/double-burger.jpeg', stim_type: 'beef_burger_2' },
   { stimulus: './img/burgers/thickburger.jpeg', stim_type: 'beef_burger_3'},
   { stimulus: './img/steaks/steak_1.jpeg', stim_type: 'beef_steak_1' },
   { stimulus: './img/steaks/steak_3.jpeg', stim_type: 'beef_steak_2' },
   { stimulus: './img/steaks/steak_8.jpeg', stim_type: 'beef_steak_3'}
 ];
+console.log(prime_list)
+const target_list = [
+  { stimulus: './img/targets/pic1.png', stim_type: 'target_1' },
+  { stimulus: './img/targets/pic2.png', stim_type: 'target_2' },
+  { stimulus: './img/targets/pic3.png', stim_type: 'target_3'},
+  { stimulus: './img/targets/pic4.png', stim_type: 'target_4' },
+  { stimulus: './img/targets/pic5.png', stim_type: 'target_5' },
+  { stimulus: './img/targets/pic6.png', stim_type: 'target_6'}
+];
+
 console.log(prime_list)
 
 var press_to_start = {
@@ -139,26 +148,63 @@ var fixation = {
   choices: "NO_KEYS",
   trial_duration: 250,
 };
+let index = 0;
 
 var prime_screen = {
   type: jsPsychImageKeyboardResponse,
-  stimulus: jsPsych.timelineVariable('stimulus'),
+  stimulus: function() {
+    console.log(index)
+    stim_to_present = prime_list[index].stimulus
+    console.log(stim_to_present)
+    index += 1
+    return(stim_to_present)
+  },
   stimulus_width: 300,
   choices: "NO_KEYS",
-  trial_duration: 200, 
+  trial_duration: 150, 
   data: {
-    stim_type: jsPsych.timelineVariable('stim_type')
+    stim_type: prime_list[index].stim_type
+  }
+}
+var target_screen = {
+  type: jsPsychImageKeyboardResponse,
+  stimulus: function() {
+    return(`./img/targets/pic${target_nums[index]}.png`)
+  },
+  stimulus_width: 300,
+  choices: "NO_KEYS",
+  trial_duration: 150, 
+  data: {
+    stim_type: prime_list[index].stim_type
   }
 }
 
+
+var loop_node = {
+  timeline: [fixation, prime_screen, target_screen],
+  loop_function: function(){
+    console.log(index)
+      if(index < 6){
+          return true;
+      } else {
+          return false;
+      }
+  }
+}
+timeline.push(loop_node)
+
+/*
 var test_procedure = {
   timeline: [fixation, prime_screen],
-  timeline_variables: prime_list,
-  randomize_order: true
+  randomize_order: true,
+  timelineVariable: { stimulus: 1 },
+  sample: {
+    type: 'fixed-repetitions',
+    size: 6
+  }
 }
-
 timeline.push(test_procedure)
-
+*/
 
 /*
 var leave_fullscreen = {
