@@ -50,11 +50,6 @@ var preload = {
 timeline.push(preload)
 */
 
-var preload = {
-  type: jsPsychPreload,
-  auto_preload: true
-}
-timeline.push(preload)
 
 
 const good_right = Math.floor(Math.random() * 2);
@@ -112,6 +107,7 @@ timeline.push(instr_block1)
 
 num_array = Array.from(Array(200).keys()).map(v=> v+1)
 target_nums = jsPsych.randomization.sampleWithoutReplacement(num_array, 12)
+target_imgs = target_nums.map(v=> `./img/targets/pic${v}.png`)
 
 const prime_list = [
   { stimulus: './img/burgers/2patties_solo.jpeg', prime: './img/targets/pic1.png', stim_type: 'beef_burger_1' },
@@ -121,15 +117,17 @@ const prime_list = [
   { stimulus: './img/steaks/steak_3.jpeg', stim_type: 'beef_steak_2' },
   { stimulus: './img/steaks/steak_8.jpeg', stim_type: 'beef_steak_3'}
 ];
-console.log(prime_list)
-const target_list = [
-  { stimulus: './img/targets/pic1.png', stim_type: 'target_1' },
-  { stimulus: './img/targets/pic2.png', stim_type: 'target_2' },
-  { stimulus: './img/targets/pic3.png', stim_type: 'target_3'},
-  { stimulus: './img/targets/pic4.png', stim_type: 'target_4' },
-  { stimulus: './img/targets/pic5.png', stim_type: 'target_5' },
-  { stimulus: './img/targets/pic6.png', stim_type: 'target_6'}
-];
+
+prime_images = prime_list.map(v=> v.stimulus)
+
+var preload = {
+  type: jsPsychPreload,
+  images: target_imgs.concat(prime_images)
+}
+
+
+timeline.push(preload)
+
 
 console.log(prime_list)
 
@@ -144,36 +142,48 @@ timeline.push(press_to_start)
 
 var fixation = {
   type: jsPsychHtmlKeyboardResponse,
-  stimulus: '<div style="font-size:60px;">+</div>',
+  stimulus: `<div class="container_amp" style="font-size:60px;">+</div>`,
   choices: "NO_KEYS",
+  prompt: '<p>D = less pleasant, K = more pleasant</p>',
   trial_duration: 250,
 };
 let index = 0;
 
 var prime_screen = {
-  type: jsPsychImageKeyboardResponse,
+  type: jsPsychHtmlKeyboardResponse,
   stimulus: function() {
-    console.log(index)
     stim_to_present = prime_list[index].stimulus
-    console.log(stim_to_present)
-    index += 1
-    return(stim_to_present)
+    stim_val = `
+    <div class="container_amp">
+      <img src="${stim_to_present}" class="image_amp">
+      <div class="text">Your text here</div>
+    </div>`
+    return(stim_val)
   },
-  stimulus_width: 300,
+  // stimulus_width: 240,
   choices: "NO_KEYS",
-  trial_duration: 150, 
+  trial_duration: 500,
+  prompt: '<p>D = less pleasant, K = more pleasant</p>',
   data: {
     stim_type: prime_list[index].stim_type
   }
 }
 var target_screen = {
-  type: jsPsychImageKeyboardResponse,
+  type: jsPsychHtmlKeyboardResponse,
   stimulus: function() {
-    return(`./img/targets/pic${target_nums[index]}.png`)
+    stim_val = `
+      <div class="container_amp">
+        <img src="./img/targets/pic${target_nums[index]}.png" class="image_amp">
+        <div class="text">Your text here</div>
+      </div>`
+    index += 1
+    // return(`./img/targets/pic${target_nums[index]}.png`)
+    return(stim_val)
   },
-  stimulus_width: 300,
-  choices: "NO_KEYS",
-  trial_duration: 150, 
+  // stimulus_width: 240,
+  choices: ['d', 'k'],
+  prompt: '<p>D = less pleasant, K = more pleasant</p>',
+  trial_duration: null, 
   data: {
     stim_type: prime_list[index].stim_type
   }
