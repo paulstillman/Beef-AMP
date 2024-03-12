@@ -554,26 +554,40 @@ input[type="radio"]:checked + .label:after {
 
 .container_amp {
     position: relative;
-    width: 240; /* Adjust width as needed */
-    height: 240; /* Adjust height as needed */
-    border: 1px solid #ccc;
+    /* width: 240; 
+    height: 240;  */
+    /* border: 1px solid #ccc; */
     text-align: center;
 }
 
 .image_amp {
+    position:relative;
     display: block;
-    margin: 0 auto;
-    max-width: 100%;
-    max-height: 100%;
+    /* margin: auto; */
+    max-width: 240px;
+    max-height: 240px;
 }
 
-.text_amp {
+.text_left {
     position: absolute;
-    bottom: 0;
+    font-family: 'Open Sans', 'Arial', sans-serif;
+    font-size: 32px;
+    font-weight: bold;
+    bottom: 25%;
     left: 0;
-    right: 0;
-    margin-bottom: 10px; /* Adjust margin as needed */
+    right: 25%;
+    /* margin-bottom: 10px; */
   }
 
+.text_right {
+    position: absolute;
+    font-family: 'Open Sans', 'Arial', sans-serif;
+    font-size: 32px;
+    font-weight: bold;
+    bottom: 25%;
+    left: 25%;
+    right: 0;
+    /* margin-bottom: 10px; */
+  }
 
 

@@ -142,10 +142,11 @@ timeline.push(press_to_start)
 
 var fixation = {
   type: jsPsychHtmlKeyboardResponse,
-  stimulus: `<div class="container_amp" style="font-size:60px;">+</div>`,
+  stimulus: `<div class="container_amp" style="font-size:60px;">+</div>
+  <div class="text_left">D<br>Less Pleasant</div>
+  <div class="text_right">K<br>More Pleasant</div>`,
   choices: "NO_KEYS",
-  prompt: '<p>D = less pleasant, K = more pleasant</p>',
-  trial_duration: 250,
+  trial_duration: 100, // change back to 
 };
 let index = 0;
 
@@ -156,14 +157,14 @@ var prime_screen = {
     stim_val = `
     <div class="container_amp">
       <img src="${stim_to_present}" class="image_amp">
-      <div class="text">Your text here</div>
-    </div>`
+    </div>
+    <div class="text_left">D<br>Less Pleasant</div>
+    <div class="text_right">K<br>More Pleasant</div>`
     return(stim_val)
   },
   // stimulus_width: 240,
-  choices: "NO_KEYS",
-  trial_duration: 500,
-  prompt: '<p>D = less pleasant, K = more pleasant</p>',
+  choices: "ALL_KEYS",
+  trial_duration: null, // change back to slower once it's all ready to go
   data: {
     stim_type: prime_list[index].stim_type
   }
@@ -174,24 +175,65 @@ var target_screen = {
     stim_val = `
       <div class="container_amp">
         <img src="./img/targets/pic${target_nums[index]}.png" class="image_amp">
-        <div class="text">Your text here</div>
-      </div>`
+      </div>
+      <div class="text_left">D<br>Less Pleasant</div>
+      <div class="text_right">K<br>More Pleasant</div>`
     index += 1
     // return(`./img/targets/pic${target_nums[index]}.png`)
     return(stim_val)
   },
   // stimulus_width: 240,
   choices: ['d', 'k'],
-  prompt: '<p>D = less pleasant, K = more pleasant</p>',
-  trial_duration: null, 
+  //prompt: '<p>D = less pleasant, K = more pleasant</p>',
+  trial_duration: 75, 
   data: {
     stim_type: prime_list[index].stim_type
   }
 }
 
 
+/* 
+var fixation = {
+  type: jsPsychHtmlKeyboardResponse,
+  stimulus: `<div style="font-size:60px;">+</div>`,
+  choices: "NO_KEYS",
+  // prompt: '<p>D = less pleasant, K = more pleasant</p>',
+  trial_duration: 250,
+};
+let index = 0;
+
+var prime_screen = {
+  type: jsPsychImageKeyboardResponse,
+  stimulus: function() {
+    stim_to_present = prime_list[index].stimulus
+    return(stim_to_present)
+  },
+  stimulus_width: 240,
+  choices: "NO_KEYS",
+  trial_duration: 500,
+  prompt: '<div class = "text_amp">D = less pleasant, K = more pleasant</div>',
+  data: {
+    stim_type: prime_list[index].stim_type
+  }
+}
+var target_screen = {
+  type: jsPsychImageKeyboardResponse,
+  stimulus: function() {
+    index += 1
+    return(`./img/targets/pic${target_nums[index]}.png`)
+  },
+  // stimulus_width: 240,
+  choices: ['d', 'k'],
+  prompt: '<div class = "text_amp">D = less pleasant, K = more pleasant</div>',
+  trial_duration: null, 
+  data: {
+    stim_type: prime_list[index].stim_type
+  }
+}
+*/
+
 var loop_node = {
-  timeline: [fixation, prime_screen, target_screen],
+  timeline: [fixation, target_screen, prime_screen],
   loop_function: function(){
     console.log(index)
       if(index < 6){
