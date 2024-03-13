@@ -22,35 +22,7 @@ jsPsych.data.addProperties({ subject_id: sub_id });
 const fname = `${sub_id}.csv`;
 
 
-
-
 let timeline = [];
-/*
-var preload = {
-  type: jsPsychPreload,
-  images: ['./img/bad/bloodknife1.jpg',
-    './img/bad/caraccident2.jpg',
-    './img/bad/feces2.jpg',
-    './img/bad/fire9.jpg',
-    './img/bad/planecrash2.jpg',
-    './img/bad/shot3.jpg',
-    './img/good/Dog6.jpg',
-    './img/good/Cat5.jpg',
-    './img/good/flowers2.jpg',
-    './img/good/flowers6.jpg',
-    './img/good/Lake12.jpg',
-    './img/good/Rainbow2.jpg',
-    './img/good/Lake2.jpg',
-    './img/target_victim/Target1.png',
-    './img/target_victim/Target2.png',
-    './img/target_victim/Target3.png',
-    './img/target_victim/Target4.png',
-    './img/target_victim/Target5.png']
-};
-timeline.push(preload)
-*/
-
-
 
 const good_right = Math.floor(Math.random() * 2);
 if (good_right === 1) {
@@ -110,12 +82,18 @@ target_nums = jsPsych.randomization.sampleWithoutReplacement(num_array, 12)
 target_imgs = target_nums.map(v=> `./img/targets/pic${v}.png`)
 
 const prime_list = [
-  { stimulus: './img/burgers/2patties_solo.jpeg', prime: './img/targets/pic1.png', stim_type: 'beef_burger_1' },
+  { stimulus: './img/burgers/2patties_solo.jpeg', stim_type: 'beef_burger_1' },
   { stimulus: './img/burgers/double-burger.jpeg', stim_type: 'beef_burger_2' },
   { stimulus: './img/burgers/thickburger.jpeg', stim_type: 'beef_burger_3'},
   { stimulus: './img/steaks/steak_1.jpeg', stim_type: 'beef_steak_1' },
   { stimulus: './img/steaks/steak_3.jpeg', stim_type: 'beef_steak_2' },
-  { stimulus: './img/steaks/steak_8.jpeg', stim_type: 'beef_steak_3'}
+  { stimulus: './img/steaks/steak_8.jpeg', stim_type: 'beef_steak_3'},
+  { stimulus: './img/desserts/brownies.jpeg', stim_type: 'dessert_1' },
+  { stimulus: './img/desserts/cake5.jpeg', stim_type: 'dessert_2' },
+  { stimulus: './img/desserts/cookies.jpeg', stim_type: 'dessert_3'},
+  { stimulus: './img/healthy/apples3.jpeg', stim_type: 'fruit_1' },
+  { stimulus: './img/healthy/bananas2.jpeg', stim_type: 'fruit_2' },
+  { stimulus: './img/healthy/blueberries2.jpeg', stim_type: 'fruit_3'}
 ];
 
 prime_images = prime_list.map(v=> v.stimulus)
@@ -146,7 +124,7 @@ var fixation = {
   <div class="text_left">D<br>Less Pleasant</div>
   <div class="text_right">K<br>More Pleasant</div>`,
   choices: "NO_KEYS",
-  trial_duration: 100, // change back to 
+  trial_duration: 150, // change back to 
 };
 let index = 0;
 
@@ -163,8 +141,8 @@ var prime_screen = {
     return(stim_val)
   },
   // stimulus_width: 240,
-  choices: "ALL_KEYS",
-  trial_duration: null, // change back to slower once it's all ready to go
+  choices: "NO_KEYS",
+  trial_duration: 1000, // change back to slower once it's all ready to go
   data: {
     stim_type: prime_list[index].stim_type
   }
@@ -172,6 +150,7 @@ var prime_screen = {
 var target_screen = {
   type: jsPsychHtmlKeyboardResponse,
   stimulus: function() {
+    console.log(prime_list[index].stim_type)
     stim_val = `
       <div class="container_amp">
         <img src="./img/targets/pic${target_nums[index]}.png" class="image_amp">
@@ -185,7 +164,7 @@ var target_screen = {
   // stimulus_width: 240,
   choices: ['d', 'k'],
   //prompt: '<p>D = less pleasant, K = more pleasant</p>',
-  trial_duration: 75, 
+  trial_duration: null, 
   data: {
     stim_type: prime_list[index].stim_type
   }
@@ -233,10 +212,10 @@ var target_screen = {
 */
 
 var loop_node = {
-  timeline: [fixation, target_screen, prime_screen],
+  timeline: [fixation, prime_screen, target_screen],
   loop_function: function(){
     console.log(index)
-      if(index < 6){
+      if(index < 12){
           return true;
       } else {
           return false;
@@ -277,6 +256,16 @@ const save_data = {
 };
 timeline.push(save_data);
 */
+
+const save_data = {
+  type: jsPsychPipe,
+  action: "save",
+  experiment_id: "0fKnOsyHzKUQ",
+  filename: fname,
+  data_string: ()=>jsPsych.data.get().csv()
+};
+timeline.push(save_data);
+
 
 jsPsych.run(timeline);
 
