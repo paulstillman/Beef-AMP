@@ -79,7 +79,7 @@ timeline.push(instr_block1)
 
 num_array = Array.from(Array(200).keys()).map(v=> v+1)
 target_nums = jsPsych.randomization.sampleWithoutReplacement(num_array, 12)
-target_imgs = target_nums.map(v=> `./img/targets/pic${v}.png`)
+target_imgs = target_nums.map(v=> `./img/targets_resized/pic${v}.png`)
 
 const prime_list = [
   { stimulus: './img/burgers/2patties_solo.jpeg', stim_type: 'beef_burger_1' },
@@ -120,9 +120,11 @@ timeline.push(press_to_start)
 
 var fixation = {
   type: jsPsychHtmlKeyboardResponse,
-  stimulus: `<div class="container_amp" style="font-size:60px;">+</div>
-  <div class="text_left">D<br>Less Pleasant</div>
-  <div class="text_right">K<br>More Pleasant</div>`,
+  stimulus: `<div class="container_amp_v2" style="font-size:60px;">
+    <img src="./img/fixation.png" class="image_amp_v2">
+    <div class="text_left_v2">D<br>Less Pleasant</div>
+    <div class="text_right_v2">K<br>More Pleasant</div>
+  </div>`,
   choices: "NO_KEYS",
   trial_duration: 150, // change back to 
 };
@@ -133,16 +135,16 @@ var prime_screen = {
   stimulus: function() {
     stim_to_present = prime_list[index].stimulus
     stim_val = `
-    <div class="container_amp">
-      <img src="${stim_to_present}" class="image_amp">
-    </div>
-    <div class="text_left">D<br>Less Pleasant</div>
-    <div class="text_right">K<br>More Pleasant</div>`
+    <div class="container_amp_v2">
+      <img src="${stim_to_present}" class="image_amp_v2">
+      <div class="text_left_v2">D<br>Less Pleasant</div>
+      <div class="text_right_v2">K<br>More Pleasant</div>
+    </div>`
     return(stim_val)
   },
   // stimulus_width: 240,
   choices: "NO_KEYS",
-  trial_duration: 1000, // change back to slower once it's all ready to go
+  trial_duration: 500, // change back to slower once it's all ready to go
   data: {
     stim_type: prime_list[index].stim_type
   }
@@ -152,11 +154,11 @@ var target_screen = {
   stimulus: function() {
     console.log(prime_list[index].stim_type)
     stim_val = `
-      <div class="container_amp">
-        <img src="./img/targets/pic${target_nums[index]}.png" class="image_amp">
-      </div>
-      <div class="text_left">D<br>Less Pleasant</div>
-      <div class="text_right">K<br>More Pleasant</div>`
+      <div class="container_amp_v2">
+        <img src="./img/targets_resized/pic${target_nums[index]}.png" class="image_amp_v2">
+        <div class="text_left_v2">D<br>Less Pleasant</div>
+        <div class="text_right_v2">K<br>More Pleasant</div>
+      </div>`
     index += 1
     // return(`./img/targets/pic${target_nums[index]}.png`)
     return(stim_val)
