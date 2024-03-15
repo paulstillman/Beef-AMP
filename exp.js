@@ -145,9 +145,10 @@ var prime_screen = {
   // stimulus_width: 240,
   choices: "NO_KEYS",
   trial_duration: 500, // change back to slower once it's all ready to go
-  data: {
-    stim_type: prime_list[index].stim_type
+  on_finish: function(data) {
+    data.stim_type = prime_list[index].stim_type
   }
+
 }
 var target_screen = {
   type: jsPsychHtmlKeyboardResponse,
@@ -159,7 +160,6 @@ var target_screen = {
         <div class="text_left_v2">D<br>Less Pleasant</div>
         <div class="text_right_v2">K<br>More Pleasant</div>
       </div>`
-    index += 1
     // return(`./img/targets/pic${target_nums[index]}.png`)
     return(stim_val)
   },
@@ -167,8 +167,9 @@ var target_screen = {
   choices: ['d', 'k'],
   //prompt: '<p>D = less pleasant, K = more pleasant</p>',
   trial_duration: null, 
-  data: {
-    stim_type: prime_list[index].stim_type
+  on_finish: function(data){
+    data.stim_type = prime_list[index].stim_type
+    index += 1
   }
 }
 
