@@ -1,17 +1,25 @@
 
+// add ?nosave to the URL when testing: nothing is sent to DataPipe and the
+// raw data is shown at the end instead
+const NOSAVE = new URLSearchParams(location.search).has('nosave');
+
+// DataPipe (Google Drive) via the pipe extension: each trial is streamed as it
+// happens, and the full CSV is submitted when the experiment ends
 const jsPsych = initJsPsych({
+  extensions: [
+    {
+      type: jsPsychExtensionPipe,
+      params: {
+        experiment_id: "4OEY2BEtOzsk",
+        filename: () => `${sub_id}.csv`,
+        enabled: !NOSAVE,
+      },
+    },
+  ],
   on_finish: function () {
-    jsPsych.data.displayData();
-    // console.log(jsPsych.data.get().csv());
+    if (NOSAVE) jsPsych.data.displayData();
   },
 });
-
-function shuffleArray(array) {
-  for (let i = array.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [array[i], array[j]] = [array[j], array[i]];
-  }
-}
 
 
 let sub_id = jsPsych.data.getURLVariable('workerId');
@@ -19,256 +27,202 @@ if (sub_id === undefined) {
   sub_id = jsPsych.randomization.randomID(10);
 }
 jsPsych.data.addProperties({ subject_id: sub_id });
-const fname = `${sub_id}.csv`;
 
 
 let timeline = [];
 
-const good_right = Math.floor(Math.random() * 2);
-if (good_right === 1) {
-  choices_goodbad = ['BAD', 'GOOD'];
-} else {
-  choices_goodbad = ['GOOD', 'BAD'];
-}
 
+/* ---------- settings ---------- */
 
-var enter_fullscreen = {
-  type: jsPsychFullscreen,
-  fullscreen_mode: true,
-  message: "You will now enter full screen, please do not exit full screen until the end of the experiment."
-}
-
-// timeline.push(enter_fullscreen)
-
-
-/* 
-var instr_page1 = `<div class='instructions'>
-
-<p>For the next part of the study, we are interested in your evaluations of different things, 
-including the people you got to know in the previous part of the experiment.</p>
-
-<p>You will be presented with many different pictures, and asked to evaluate whether you believe 
-the person or image depicted in the picture is "GOOD" or "BAD"</p></div>`; 
-
-var instr_page2 = `<div class='instructions'>
-
-<p>For each evaluation, there will be a button that says "START". Pressing the start button will 
-make the image appear. After it appears, select either GOOD or BAD.</p>
-
-<p>Please start moving your mouse as soon as the picture appears 
-(do not wait until you have made a decision to start moving your mouse).</p>
-
-<p>Please also do not move your mouse outside of the browser window 
-(since you are in full screen mode, this should be unlikely).</p>
-
-<p>Try to make your evaluations quickly and accurately. </p> 
-
-<p>On the next slide, you will do a practice trial</p> 
-
-</div>`; 
-
-
-// combine pages into blocks
-instr_block1 = {
-    type: jsPsychInstructions,
-    pages: [instr_page1, instr_page2],
-    show_clickable_nav: true,
+// durations in ms. Final values will follow Kurdi et al. (2023):
+// fixation 500, prime 100, blank 100, target 100, then mask until response.
+// Kept slower for now to make testing easier.
+const timing = {
+  fixation: 150,
+  prime: 500,
+  target: 500,
+  // mask stays up until response
 };
-timeline.push(instr_block1)
-*/
 
-num_array = Array.from(Array(200).keys()).map(v=> v+1)
-target_nums = jsPsych.randomization.sampleWithoutReplacement(num_array, 12)
-target_imgs = target_nums.map(v=> `./img/targets_resized/pic${v}.png`)
+const n_reps_per_prime = 4; // 5 images x 4 reps = 20 trials per category
+const n_targets_available = 200;
 
-const prime_list = [
-  { stimulus: './img/burgers/2patties_solo.jpeg', stim_type: 'beef_burger_1' },
-  { stimulus: './img/burgers/double-burger.jpeg', stim_type: 'beef_burger_2' },
-  { stimulus: './img/burgers/thickburger.jpeg', stim_type: 'beef_burger_3'},
-  { stimulus: './img/steaks/steak_1.jpeg', stim_type: 'beef_steak_1' },
-  { stimulus: './img/steaks/steak_3.jpeg', stim_type: 'beef_steak_2' },
-  { stimulus: './img/steaks/steak_8.jpeg', stim_type: 'beef_steak_3'},
-  { stimulus: './img/desserts/brownies.jpeg', stim_type: 'dessert_1' },
-  { stimulus: './img/desserts/cake5.jpeg', stim_type: 'dessert_2' },
-  { stimulus: './img/desserts/cookies.jpeg', stim_type: 'dessert_3'},
-  { stimulus: './img/healthy/apples3.jpeg', stim_type: 'fruit_1' },
-  { stimulus: './img/healthy/bananas2.jpeg', stim_type: 'fruit_2' },
-  { stimulus: './img/healthy/blueberries2.jpeg', stim_type: 'fruit_3'}
-];
+const prime_images = {
+  beef: [
+    './img/beef/2patties_solo.jpeg',
+    './img/beef/steak_1.jpeg',
+    './img/beef/steak_3.jpeg',
+    './img/beef/steak_8.jpeg',
+    './img/beef/thickburger.jpeg',
+  ],
+  chicken: [
+    './img/chicken/fried_chicken_sandwich.jpg',
+    './img/chicken/full_chicken.jpeg',
+    './img/chicken/grilled_chicken.jpg',
+    './img/chicken/wings_1.jpeg',
+    './img/chicken/wings_2.jpeg',
+  ],
+  dessert: [
+    './img/desserts/apple_pie.jpeg',
+    './img/desserts/cake5.jpeg',
+    './img/desserts/cheesecake.jpeg',
+    './img/desserts/cookies.jpeg',
+    './img/desserts/ice_cream.png',
+  ],
+};
 
-prime_images = prime_list.map(v=> v.stimulus)
+
+/* ---------- build trial list ---------- */
+
+// every prime image repeated n_reps_per_prime times, shuffled together across categories
+const prime_trials = jsPsych.randomization.shuffle(
+  Object.entries(prime_images).flatMap(([category, files]) =>
+    files.flatMap(file =>
+      Array(n_reps_per_prime).fill({ prime_category: category, prime_file: file })
+    )
+  )
+);
+
+// each target painting used on at most one trial
+const target_nums = jsPsych.randomization.sampleWithoutReplacement(
+  Array.from({ length: n_targets_available }, (_, i) => i + 1),
+  prime_trials.length
+);
+
+const amp_trials = prime_trials.map((t, i) => ({
+  ...t,
+  target_file: `./img/targets_resized/pic${target_nums[i]}.png`,
+  amp_trial: i + 1,
+}));
+
+
+/* ---------- trials ---------- */
 
 var preload = {
   type: jsPsychPreload,
-  images: target_imgs.concat(prime_images)
+  images: amp_trials.map(t => t.target_file)
+    .concat(Object.values(prime_images).flat(), ['./img/fixation.png', './img/ampmask.jpg']),
+};
+timeline.push(preload);
+
+/* ---------- instructions (adapted from Kurdi et al., 2023, Exp. 1) ---------- */
+
+var instr_page1 = `<div class='instructions'>
+<p>This study examines how people make simple judgments.</p>
+<p>During the task, you will see pairs of pictures appear one after the other.</p>
+<p>The first picture will be a real-life image and the second picture will be an abstract painting.</p>
+<p>The first image is simply a warning signal for the abstract painting and should be ignored.</p>
+<p>Your task is to judge how visually pleasant each abstract painting is.</p>
+</div>`;
+
+var instr_page2 = `<div class='instructions'>
+<p>Put your index fingers on the D and K keys of your keyboard.</p>
+<p>If the abstract painting is <b>less</b> visually pleasant than average, please press the <b>D</b> key on the left.</p>
+<p>If the abstract painting is <b>more</b> visually pleasant than average, please press the <b>K</b> key on the right.</p>
+<p>Note that the first (real-life) image can sometimes bias judgments of the abstract paintings.
+Please try your absolute best not to let the real-life images bias your judgment of the abstract paintings.</p>
+</div>`;
+
+var instructions = {
+  type: jsPsychInstructions,
+  pages: [instr_page1, instr_page2],
+  show_clickable_nav: true,
+  data: { trial_part: 'instructions' },
+};
+timeline.push(instructions);
+
+// TODO once practice trials exist: practice intro ("We will now provide you with an opportunity
+// to practice the task...") before practice, then "Good! The test phase will now begin.
+// Keep going as before." before this reminder.
+var test_ready = {
+  type: jsPsychHtmlKeyboardResponse,
+  stimulus: `<div class='instructions'>
+    <p>As a reminder: If the abstract painting is less visually pleasant than average, press the D key.
+    And if it is more visually pleasant than average, press the K key.</p>
+    <p>Ready? Press the space bar to begin.</p>
+  </div>`,
+  choices: [' '],
+  data: { trial_part: 'instructions' },
+};
+timeline.push(test_ready);
+
+
+// tags every row (fixation, prime, target, mask) with the trial's prime/target info
+function amp_data(trial_part) {
+  return {
+    trial_part: trial_part,
+    amp_trial: jsPsych.timelineVariable('amp_trial'),
+    prime_category: jsPsych.timelineVariable('prime_category'),
+    prime_file: jsPsych.timelineVariable('prime_file'),
+    target_file: jsPsych.timelineVariable('target_file'),
+  };
 }
 
-
-timeline.push(preload)
-
-
-console.log(prime_list)
-
-var press_to_start = {
-  type: jsPsychHtmlKeyboardResponse,
-  stimulus: '<div style="font-size:32px;">Press any key to start</div>',
-  choices: "ALL_KEYS",
-  trial_duration: null,
-};
-
-timeline.push(press_to_start)
-
-var fixation = {
-  type: jsPsychHtmlKeyboardResponse,
-  stimulus: `<div class="container_amp_v2" style="font-size:60px;">
-    <img src="./img/fixation.png" class="image_amp_v2">
-    <div class="text_left_v2">D<br>Less Pleasant</div>
-    <div class="text_right_v2">K<br>More Pleasant</div>
-  </div>`,
-  choices: "NO_KEYS",
-  trial_duration: 150, // change back to 
-};
-let index = 0;
-
-var prime_screen = {
-  type: jsPsychHtmlKeyboardResponse,
-  stimulus: function() {
-    stim_to_present = prime_list[index].stimulus
-    stim_val = `
+// img_style lets the 256px mask be stretched to cover the 480px targets
+function amp_screen(img_src, img_style = '') {
+  return `
     <div class="container_amp_v2">
-      <img src="${stim_to_present}" class="image_amp_v2">
+      <img src="${img_src}" class="image_amp_v2" style="${img_style}">
       <div class="text_left_v2">D<br>Less Pleasant</div>
       <div class="text_right_v2">K<br>More Pleasant</div>
-    </div>`
-    return(stim_val)
-  },
-  // stimulus_width: 240,
-  choices: "NO_KEYS",
-  trial_duration: 500, // change back to slower once it's all ready to go
-  on_finish: function(data) {
-    data.stim_type = prime_list[index].stim_type
-  }
-
-}
-var target_screen = {
-  type: jsPsychHtmlKeyboardResponse,
-  stimulus: function() {
-    console.log(prime_list[index].stim_type)
-    stim_val = `
-      <div class="container_amp_v2">
-        <img src="./img/targets_resized/pic${target_nums[index]}.png" class="image_amp_v2">
-        <div class="text_left_v2">D<br>Less Pleasant</div>
-        <div class="text_right_v2">K<br>More Pleasant</div>
-      </div>`
-    // return(`./img/targets/pic${target_nums[index]}.png`)
-    return(stim_val)
-  },
-  // stimulus_width: 240,
-  choices: ['d', 'k'],
-  //prompt: '<p>D = less pleasant, K = more pleasant</p>',
-  trial_duration: null, 
-  on_finish: function(data){
-    data.stim_type = prime_list[index].stim_type
-    index += 1
-  }
+    </div>`;
 }
 
-
-/* 
 var fixation = {
   type: jsPsychHtmlKeyboardResponse,
-  stimulus: `<div style="font-size:60px;">+</div>`,
+  stimulus: amp_screen('./img/fixation.png'),
   choices: "NO_KEYS",
-  // prompt: '<p>D = less pleasant, K = more pleasant</p>',
-  trial_duration: 250,
+  trial_duration: timing.fixation,
+  data: amp_data('fixation'),
 };
-let index = 0;
 
 var prime_screen = {
-  type: jsPsychImageKeyboardResponse,
-  stimulus: function() {
-    stim_to_present = prime_list[index].stimulus
-    return(stim_to_present)
-  },
-  stimulus_width: 240,
+  type: jsPsychHtmlKeyboardResponse,
+  stimulus: () => amp_screen(jsPsych.evaluateTimelineVariable('prime_file')),
   choices: "NO_KEYS",
-  trial_duration: 500,
-  prompt: '<div class = "text_amp">D = less pleasant, K = more pleasant</div>',
-  data: {
-    stim_type: prime_list[index].stim_type
-  }
-}
+  trial_duration: timing.prime,
+  data: amp_data('prime'),
+};
+
+// response can come during the target or the mask; whichever row has it gets
+// pleasant (1 = k, 0 = d) and rt_from_target (ms from target onset)
 var target_screen = {
-  type: jsPsychImageKeyboardResponse,
-  stimulus: function() {
-    index += 1
-    return(`./img/targets/pic${target_nums[index]}.png`)
-  },
-  // stimulus_width: 240,
+  type: jsPsychHtmlKeyboardResponse,
+  stimulus: () => amp_screen(jsPsych.evaluateTimelineVariable('target_file')),
   choices: ['d', 'k'],
-  prompt: '<div class = "text_amp">D = less pleasant, K = more pleasant</div>',
-  trial_duration: null, 
-  data: {
-    stim_type: prime_list[index].stim_type
-  }
-}
-*/
-
-var loop_node = {
-  timeline: [fixation, prime_screen, target_screen],
-  loop_function: function(){
-    console.log(index)
-      if(index < 12){
-          return true;
-      } else {
-          return false;
-      }
-  }
-}
-timeline.push(loop_node)
-
-/*
-var test_procedure = {
-  timeline: [fixation, prime_screen],
-  randomize_order: true,
-  timelineVariable: { stimulus: 1 },
-  sample: {
-    type: 'fixed-repetitions',
-    size: 6
-  }
-}
-timeline.push(test_procedure)
-*/
-
-/*
-var leave_fullscreen = {
-  type: jsPsychFullscreen,
-  fullscreen_mode: false,
-  message: "You will now leave full screen"
-}
-
-timeline.push(leave_fullscreen)
-*/
-/*
-const save_data = {
-  type: jsPsychPipe,
-  action: "save",
-  experiment_id: "v2ui0QxWeayJ",
-  filename: fname,
-  data_string: () => jsPsych.data.get().csv()
+  trial_duration: timing.target,
+  data: amp_data('target'),
+  on_finish: function (data) {
+    if (data.response !== null) {
+      data.pleasant = data.response === 'k' ? 1 : 0;
+      data.rt_from_target = data.rt;
+    }
+  },
 };
-timeline.push(save_data);
-*/
 
-const save_data = {
-  type: jsPsychPipe,
-  action: "save",
-  experiment_id: "0fKnOsyHzKUQ",
-  filename: fname,
-  data_string: ()=>jsPsych.data.get().csv()
+var mask_screen = {
+  type: jsPsychHtmlKeyboardResponse,
+  stimulus: amp_screen('./img/ampmask.jpg', 'width:480px; height:480px;'),
+  choices: ['d', 'k'],
+  trial_duration: null,
+  data: amp_data('mask'),
+  on_finish: function (data) {
+    data.pleasant = data.response === 'k' ? 1 : 0;
+    data.rt_from_target = timing.target + data.rt;
+  },
 };
-timeline.push(save_data);
+
+// mask only runs if there was no response during the target
+var mask_if_needed = {
+  timeline: [mask_screen],
+  conditional_function: () => jsPsych.data.get().last(1).values()[0].response === null,
+};
+
+var amp_block = {
+  timeline: [fixation, prime_screen, target_screen, mask_if_needed],
+  timeline_variables: amp_trials,
+};
+timeline.push(amp_block);
 
 
 jsPsych.run(timeline);
-
