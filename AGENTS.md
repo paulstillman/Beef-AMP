@@ -12,6 +12,14 @@ People: Paul Stillman (owner of this repo), Melissa Ferguson (Yale; PI), Arin Ko
 
 There is no build step, package manager, or test suite. Everything is plain HTML/CSS/JS loaded from CDNs.
 
+## Status / where to pick up (last updated 2026-10-28)
+
+- **Live:** https://paulstillman.github.io/Beef-AMP/ (deploys from `main`). Test URL: https://paulstillman.github.io/Beef-AMP/?workerId=test&nosave
+- **Last verified (commit `524a8fb`, 2026-10-28):** the live site was run with `?nosave`. All images load from GitHub Pages, instructions → ready screen → AMP trials work, and responses land correctly on target or mask rows. A full 60-trial local run gave 20/20/20 trials, each prime image exactly 4 times, and 60 unique targets.
+- **Not yet verified:** a *real* save to Google Drive. Do one full run without `?nosave`, confirm `<workerId>.csv` appears in the DataPipe Drive folder, then delete it. Data collection must be switched on for the experiment in the DataPipe dashboard.
+- **Possible stray file:** a local preview briefly loaded the page without `?nosave` on 2026-10-28, so a small `*.partial.json` may be in the Drive folder. It's safe to delete.
+- **Next likely tasks:** practice trials, switching to Kurdi timings (when Paul says), end-of-study redirect, consent/debrief, and the pre-AMP messages/manipulation.
+
 ## Agreed study design (from the Paul / Melissa / Arin email thread, Mar–Apr 2024)
 
 - **Three prime categories, 20 trials each (20-20-20 = 60 trials):**
@@ -19,7 +27,7 @@ There is no build step, package manager, or test suite. Everything is plain HTML
   - **Chicken** (control 1; meat but "healthier", still tasty): e.g., grilled chicken, chicken or turkey sandwiches, wings. Arin suggested leaning toward grilled chicken / sandwiches.
   - **Dessert** (control 2; non-meat, tasty/indulgent): controls for "tasty/fun" positivity so differences can be attributed to food type. Chosen over fruit/healthy foods (those now live in `img/old/healthy/`).
 - **Don't use the brownie image.** It looked too much like steak (already deleted).
-- **Add a backward mask** after the target (Arin flagged it as missing; still to do).
+- **Add a backward mask** after the target (Arin flagged it as missing). Done: `img/ampmask.jpg`.
 - **Resize all prime images** to be small (≤480 px on the longest side) before use. Huge images (e.g., 5000×4000 px, 5 MB) took 100–200 ms for the browser to rescale, which made primes look skipped or shortened. All current primes are resized; resize any new ones the same way (`sips -Z 480 <file>` on macOS; sips can't write .webp, so convert those to .jpeg).
 - **Targets:** the abstract paintings currently in `img/targets_resized/` are the set Benedek Kurdi used in a published large-N study. Arin says they're fine as long as the randomization is handled properly (each participant gets random targets, each target used once).
 - A sibling study (harmful/harmless labels instead of pleasant/unpleasant, for a different person-perception project) lives in a separate repo. It's not this one.
@@ -29,9 +37,12 @@ Decisions (Paul, 2026-10-28):
 - **Timings will follow Kurdi et al. (2023)** (below), but **stay slow for now** to make testing easier. Don't switch them until Paul says so.
 - **Keep D / K** as the response keys (not Kurdi's E / I).
 
+- **Save to Google Drive via DataPipe**, with each trial streamed as it happens (needs jsPsych 8; upgraded 2026-10-28).
+- Mask image `img/ampmask.jpg` provided by Paul.
+
 Still undecided (ask Paul before doing):
 - Practice trials: how many, and which primes.
-- (Mask image: done. `img/ampmask.jpg`, added by Paul 2026-10-28.)
+- Where participants go when they finish (redirect URL).
 
 ## Reference procedure: Kurdi et al. (2023), *Behavior Research Methods* 56:3161–3194
 
@@ -44,7 +55,7 @@ Paul shared this as the methodological reference (Ferguson-lab AMP; Arin is a co
 - Primes sampled randomly without replacement; when the set is used up, sampling restarts. Each target used on only one trial. Trial order randomized per participant.
 - DV: proportion of "pleasant" responses per prime type; the AMP effect is the difference between prime types.
 
-Source PDFs are outside the repo, in `~/Dropbox/Research/beef_amp/kurdi_2023/` (paper and "Instructions and Measures" with verbatim instruction text).
+Source PDFs are outside the repo, in Paul's Dropbox at `Research/beef_amp/kurdi_2023/` (paper and "Instructions and Measures" with verbatim instruction text). The email thread is at `Research/beef_amp/Gmail - Temptation AMP project.pdf`. The Dropbox root path may differ on another computer.
 
 ## File map
 
@@ -67,7 +78,7 @@ Source PDFs are outside the repo, in `~/Dropbox/Research/beef_amp/kurdi_2023/` (
 
 All primes are ≤480 px on the longest side.
 
-`.claude/launch.json` defines a local static server (`python3 -m http.server 8000`) for previewing.
+`.claude/launch.json` (committed) defines a local static server (`python3 -m http.server 8000`) for previewing in the Claude desktop app.
 
 `.gitignore` only ignores `img/.DS_Store`; other `.DS_Store` files are committed.
 
@@ -109,7 +120,7 @@ Updated 2026-10-28. Confirm with Paul before "fixing" design choices.
 - **Key-side counterbalancing** is not implemented (D is always "Less Pleasant"). Kurdi didn't counterbalance either.
 - **No end-of-study redirect** (e.g. back to Qualtrics/Prolific). Add it in `on_finish`; the extension finishes uploading before `on_finish` runs.
 - **Unused files:** `targets.js` (still loaded by `index.html`), `exp_old_working.js`, the commented-out canvas demo in `index.html`, and most of `amp.css`.
-- `amp.css` imports Google Fonts over `http://`, which browsers block as mixed content on GitHub Pages (https).
+- `amp.css` imports Google Fonts over `http://`, which browsers block as mixed content on GitHub Pages (https). Harmless, since text falls back to Open Sans/Arial, but worth cleaning up.
 
 ## Conventions / how to work here
 
