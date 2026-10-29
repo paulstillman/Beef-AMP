@@ -12,13 +12,14 @@ People: Paul Stillman (owner of this repo), Melissa Ferguson (Yale; PI), Arin Ko
 
 There is no build step, package manager, or test suite. Everything is plain HTML/CSS/JS loaded from CDNs.
 
-## Status / where to pick up (last updated 2026-10-28)
+## Status / where to pick up (last updated 2026-10-29)
 
 - **Live:** https://paulstillman.github.io/Beef-AMP/ (deploys from `main`). Test URL: https://paulstillman.github.io/Beef-AMP/?workerId=test&nosave
 - **Last verified (commit `524a8fb`, 2026-10-28):** the live site was run with `?nosave`. All images load from GitHub Pages, instructions → ready screen → AMP trials work, and responses land correctly on target or mask rows. A full 60-trial local run gave 20/20/20 trials, each prime image exactly 4 times, and 60 unique targets.
+- **Kurdi timings switched on (2026-10-29):** fixation 500 → prime 100 → blank 100 → target 100 → mask until response. A full 60-trial local `?nosave` run measured fixation ~509 ms and prime/blank/target ~105 ms each (the extra ~5 ms is jsPsych overhead). Not yet checked on the live site.
 - **Not yet verified:** a *real* save to Google Drive. Do one full run without `?nosave`, confirm `<workerId>.csv` appears in the DataPipe Drive folder, then delete it. Data collection must be switched on for the experiment in the DataPipe dashboard.
 - **Possible stray file:** a local preview briefly loaded the page without `?nosave` on 2026-10-28, so a small `*.partial.json` may be in the Drive folder. It's safe to delete.
-- **Next likely tasks:** practice trials, switching to Kurdi timings (when Paul says), end-of-study redirect, consent/debrief, and the pre-AMP messages/manipulation.
+- **Next likely tasks:** practice trials, end-of-study redirect, consent/debrief, and the pre-AMP messages/manipulation.
 
 ## Agreed study design (from the Paul / Melissa / Arin email thread, Mar–Apr 2024)
 
@@ -34,7 +35,7 @@ There is no build step, package manager, or test suite. Everything is plain HTML
 
 Decisions (Paul, 2026-10-28):
 - **5 images per category, each shown 4 times** → 20 trials per category, 60 total. All 60 trials are shuffled together.
-- **Timings will follow Kurdi et al. (2023)** (below), but **stay slow for now** to make testing easier. Don't switch them until Paul says so.
+- **Timings follow Kurdi et al. (2023)** (below). Switched from the slow testing values on 2026-10-29.
 - **Keep D / K** as the response keys (not Kurdi's E / I).
 
 - **Save to Google Drive via DataPipe**, with each trial streamed as it happens (needs jsPsych 8; upgraded 2026-10-28).
@@ -86,12 +87,12 @@ All primes are ≤480 px on the longest side.
 
 1. `initJsPsych` registers the DataPipe extension (see "Data saving" below). `on_finish` shows the raw data only when `?nosave` is in the URL. Otherwise participants see the extension's "Saving data…" then "Done. You may close this page." messages.
 2. Subject ID from URL param `workerId`, else a random 10-char ID. Stored as `subject_id`; data filename is `${sub_id}.csv`.
-3. Settings: `timing` (testing values: fixation 150 ms, prime 500 ms, target 500 ms, mask until response; Kurdi values noted in a comment), `n_reps_per_prime = 4`, `prime_images` (category → file list).
+3. Settings: `timing` (Kurdi values: fixation 500 ms, prime 100 ms, blank 100 ms, target 100 ms, mask until response), `n_reps_per_prime = 4`, `prime_images` (category → file list).
 4. Trial list (`amp_trials`, built before the timeline): every prime image × `n_reps_per_prime`, shuffled across categories. Each trial gets a unique target sampled without replacement from pic1–pic200. Fields: `prime_category`, `prime_file`, `target_file`, `amp_trial` (1–60).
 5. `preload` — all targets in use, all primes, fixation, mask.
 6. `instructions` (jsPsychInstructions, Next/Previous buttons): two pages adapted nearly verbatim from Kurdi et al. Exp. 1, with E/I swapped for D/K and the influence-awareness page dropped. Then `test_ready`: a D/K reminder, "Ready? Press the space bar to begin." (space only). Both are tagged `trial_part: 'instructions'`. A TODO comment holds Kurdi's practice-intro and "Good! The test phase will now begin" text for when practice trials are added.
-7. `amp_block` — `[fixation, prime_screen, target_screen, mask_if_needed]` run over `timeline_variables: amp_trials` (already in random order).
-   - Every screen uses `amp_screen(img)`: the image centered, with D / "Less Pleasant" bottom-left and K / "More Pleasant" bottom-right.
+7. `amp_block` — `[fixation, prime_screen, blank_screen, target_screen, mask_if_needed]` run over `timeline_variables: amp_trials` (already in random order).
+   - Every screen uses `amp_screen(img)`: the image centered, with D / "Less Pleasant" bottom-left and K / "More Pleasant" bottom-right. The blank screen is `amp_screen(null)`, which keeps the key labels but shows no image. Keys pressed during fixation, prime or blank are ignored.
    - `target_screen` shows for `timing.target` and accepts `d`/`k`. A press ends the trial and the mask is skipped (`mask_if_needed` is a conditional timeline that runs only if the target row has no response). Otherwise `mask_screen` stays up until `d`/`k`.
    - Whichever row got the response (target or mask) gets `pleasant` (1 = k, 0 = d) and `rt_from_target` (ms from target onset; for mask rows = `timing.target` + mask `rt`).
 8. No save trial: the extension submits the full CSV automatically when the timeline ends.
@@ -107,13 +108,12 @@ All primes are ≤480 px on the longest side.
 
 ### Data columns added by the AMP
 
-On every fixation/prime/target/mask row (via `amp_data()`): `trial_part` (`fixation`/`prime`/`target`/`mask`), `amp_trial`, `prime_category` (`beef`/`chicken`/`dessert`), `prime_file`, `target_file`. The response row (target **or** mask, per above) also has `response`, `rt` (from that screen's onset), `pleasant`, `rt_from_target`. For analysis, keep rows where `pleasant` is not missing. That gives exactly one row per AMP trial; use `trial_part` to see whether the response came during the target or the mask.
+On every fixation/prime/blank/target/mask row (via `amp_data()`): `trial_part` (`fixation`/`prime`/`blank`/`target`/`mask`), `amp_trial`, `prime_category` (`beef`/`chicken`/`dessert`), `prime_file`, `target_file`. The response row (target **or** mask, per above) also has `response`, `rt` (from that screen's onset), `pleasant`, `rt_from_target`. For analysis, keep rows where `pleasant` is not missing. That gives exactly one row per AMP trial; use `trial_part` to see whether the response came during the target or the mask.
 
 ## Known issues / unfinished work
 
 Updated 2026-10-28. Confirm with Paul before "fixing" design choices.
 
-- **Timings are still the slow testing values** (see Decisions). When switching to Kurdi's, add a 100 ms blank screen between prime and target, and set fixation 500 / prime 100 / target 100.
 - **No practice trials** (pending).
 - **No consent or debrief.** AMP instructions are in (see flow step 6).
 - **Prime repeats aren't spread out.** The 60 trials are fully shuffled, so the same image can appear on back-to-back trials. Kurdi instead cycled through the prime set without replacement. Revisit if that matters.

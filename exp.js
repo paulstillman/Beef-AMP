@@ -34,13 +34,12 @@ let timeline = [];
 
 /* ---------- settings ---------- */
 
-// durations in ms. Final values will follow Kurdi et al. (2023):
-// fixation 500, prime 100, blank 100, target 100, then mask until response.
-// Kept slower for now to make testing easier.
+// durations in ms, following Kurdi et al. (2023), Exp. 1
 const timing = {
-  fixation: 150,
-  prime: 500,
-  target: 500,
+  fixation: 500,
+  prime: 100,
+  blank: 100,
+  target: 100,
   // mask stays up until response
 };
 
@@ -158,11 +157,13 @@ function amp_data(trial_part) {
   };
 }
 
-// img_style lets the 256px mask be stretched to cover the 480px targets
+// img_style lets the 256px mask be stretched to cover the 480px targets.
+// img_src = null gives the blank screen (key labels only)
 function amp_screen(img_src, img_style = '') {
+  const img = img_src === null ? '' : `<img src="${img_src}" class="image_amp_v2" style="${img_style}">`;
   return `
     <div class="container_amp_v2">
-      <img src="${img_src}" class="image_amp_v2" style="${img_style}">
+      ${img}
       <div class="text_left_v2">D<br>Less Pleasant</div>
       <div class="text_right_v2">K<br>More Pleasant</div>
     </div>`;
@@ -182,6 +183,14 @@ var prime_screen = {
   choices: "NO_KEYS",
   trial_duration: timing.prime,
   data: amp_data('prime'),
+};
+
+var blank_screen = {
+  type: jsPsychHtmlKeyboardResponse,
+  stimulus: amp_screen(null),
+  choices: "NO_KEYS",
+  trial_duration: timing.blank,
+  data: amp_data('blank'),
 };
 
 // response can come during the target or the mask; whichever row has it gets
@@ -219,7 +228,7 @@ var mask_if_needed = {
 };
 
 var amp_block = {
-  timeline: [fixation, prime_screen, target_screen, mask_if_needed],
+  timeline: [fixation, prime_screen, blank_screen, target_screen, mask_if_needed],
   timeline_variables: amp_trials,
 };
 timeline.push(amp_block);
