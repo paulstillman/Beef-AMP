@@ -619,3 +619,14 @@ input[type="radio"]:checked + .label:after {
     max-height: 480px;
     margin:auto;
 }
+
+/* explicit-attitude scales: undo the global `input` size rule above */
+.jspsych-survey-likert-opts input[type="radio"] {
+    width: 20px;
+    height: 20px;
+}
+
+.jspsych-survey-likert-statement {
+    font-family: 'Open Sans', 'Arial', sans-serif;
+    font-size: 20px;
+}

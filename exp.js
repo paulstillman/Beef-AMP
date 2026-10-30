@@ -46,6 +46,15 @@ const timing = {
 const n_reps_per_prime = 4; // 5 images x 4 reps = 20 trials per category
 const n_targets_available = 200;
 
+// practice (before AMP 1 only): each image once. Sources/licenses in img/practice/CREDITS.md
+const practice_images = [
+  './img/practice/cutlery_set.jpg',
+  './img/practice/plate_spoons.jpg',
+  './img/practice/table_setting.jpg',
+  './img/practice/plate_set.jpg',
+  './img/practice/plate_knife.jpg',
+];
+
 const prime_images = {
   beef: [
     './img/beef/2patties_solo.jpeg',
@@ -71,36 +80,49 @@ const prime_images = {
 };
 
 
-/* ---------- build trial list ---------- */
+/* ---------- build trial lists ---------- */
+
+// each target painting is used at most once across all AMP blocks (practice, AMP 1, AMP 2)
+const target_pool = jsPsych.randomization.shuffle(
+  Array.from({ length: n_targets_available }, (_, i) => i + 1)
+);
+function take_targets(n) {
+  return target_pool.splice(0, n).map(v => `./img/targets_resized/pic${v}.png`);
+}
 
 // every prime image repeated n_reps_per_prime times, shuffled together across categories
-const prime_trials = jsPsych.randomization.shuffle(
-  Object.entries(prime_images).flatMap(([category, files]) =>
-    files.flatMap(file =>
-      Array(n_reps_per_prime).fill({ prime_category: category, prime_file: file })
+function main_primes() {
+  return jsPsych.randomization.shuffle(
+    Object.entries(prime_images).flatMap(([category, files]) =>
+      files.flatMap(file =>
+        Array(n_reps_per_prime).fill({ prime_category: category, prime_file: file })
+      )
     )
-  )
-);
+  );
+}
 
-// each target painting used on at most one trial
-const target_nums = jsPsych.randomization.sampleWithoutReplacement(
-  Array.from({ length: n_targets_available }, (_, i) => i + 1),
-  prime_trials.length
-);
+function make_amp_trials(block_name, primes) {
+  const targets = take_targets(primes.length);
+  return primes.map((p, i) => ({
+    ...p,
+    target_file: targets[i],
+    amp_block: block_name,
+    amp_trial: i + 1,
+  }));
+}
 
-const amp_trials = prime_trials.map((t, i) => ({
-  ...t,
-  target_file: `./img/targets_resized/pic${target_nums[i]}.png`,
-  amp_trial: i + 1,
-}));
+const practice_trials = make_amp_trials('practice', jsPsych.randomization.shuffle(
+  practice_images.map(file => ({ prime_category: 'practice', prime_file: file }))
+));
+const amp1_trials = make_amp_trials('amp1', main_primes());
 
 
 /* ---------- trials ---------- */
 
 var preload = {
   type: jsPsychPreload,
-  images: amp_trials.map(t => t.target_file)
-    .concat(Object.values(prime_images).flat(), ['./img/fixation.png', './img/ampmask.jpg']),
+  images: [...practice_trials, ...amp1_trials].map(t => t.target_file)
+    .concat(Object.values(prime_images).flat(), practice_images, ['./img/fixation.png', './img/ampmask.jpg']),
 };
 timeline.push(preload);
 
@@ -128,14 +150,23 @@ var instructions = {
   show_clickable_nav: true,
   data: { trial_part: 'instructions' },
 };
-timeline.push(instructions);
 
-// TODO once practice trials exist: practice intro ("We will now provide you with an opportunity
-// to practice the task...") before practice, then "Good! The test phase will now begin.
-// Keep going as before." before this reminder.
+var practice_intro = {
+  type: jsPsychHtmlKeyboardResponse,
+  stimulus: `<div class='instructions'>
+    <p>We will now provide you with an opportunity to practice the task.</p>
+    <p>Remember: You should judge whether each abstract painting is more or less visually pleasant
+    than average by pressing the D or the K key.</p>
+    <p>When you are ready to try a few practice responses, press the space bar.</p>
+  </div>`,
+  choices: [' '],
+  data: { trial_part: 'instructions' },
+};
+
 var test_ready = {
   type: jsPsychHtmlKeyboardResponse,
   stimulus: `<div class='instructions'>
+    <p>Good! The test phase will now begin. Keep going as before.</p>
     <p>As a reminder: If the abstract painting is less visually pleasant than average, press the D key.
     And if it is more visually pleasant than average, press the K key.</p>
     <p>Ready? Press the space bar to begin.</p>
@@ -143,13 +174,13 @@ var test_ready = {
   choices: [' '],
   data: { trial_part: 'instructions' },
 };
-timeline.push(test_ready);
 
 
 // tags every row (fixation, prime, target, mask) with the trial's prime/target info
 function amp_data(trial_part) {
   return {
     trial_part: trial_part,
+    amp_block: jsPsych.timelineVariable('amp_block'),
     amp_trial: jsPsych.timelineVariable('amp_trial'),
     prime_category: jsPsych.timelineVariable('prime_category'),
     prime_file: jsPsych.timelineVariable('prime_file'),
@@ -227,11 +258,138 @@ var mask_if_needed = {
   conditional_function: () => jsPsych.data.get().last(1).values()[0].response === null,
 };
 
-var amp_block = {
-  timeline: [fixation, prime_screen, blank_screen, target_screen, mask_if_needed],
-  timeline_variables: amp_trials,
+function make_amp_block(trials) {
+  return {
+    timeline: [fixation, prime_screen, blank_screen, target_screen, mask_if_needed],
+    timeline_variables: trials,
+  };
+}
+
+timeline.push(instructions, practice_intro, make_amp_block(practice_trials),
+  test_ready, make_amp_block(amp1_trials));
+
+
+/* ---------- explicit attitudes (see explicit_questions.md) ---------- */
+
+// Items, scales and labels are defined in explicit_questions.md; keep in sync.
+// Bipolar items label every point ("1<br>Very negative" ... "7<br>Very positive").
+// Unipolar "not at all ... very" items label only the endpoints; the rest are numbers.
+function bipolar_labels(low, high, mid = `Neither ${low} nor ${high}`) {
+  const cap = x => x[0].toUpperCase() + x.slice(1);
+  return [`Very ${low}`, cap(low), `Somewhat ${low}`, cap(mid),
+          `Somewhat ${high}`, cap(high), `Very ${high}`].map((l, i) => `${i + 1}<br>${l}`);
+}
+
+function unipolar_labels(low, high) {
+  return ['1', '2', '3', '4', '5', '6', '7']
+    .map((n, i) => i === 0 ? `1<br>${low}` : i === 6 ? `7<br>${high}` : n);
+}
+
+function item(name, prompt, labels) {
+  return { name: name, prompt: prompt, labels: labels, required: true };
+}
+
+const like_labels = [
+  '1<br>Dislike very much', '2<br>Dislike', '3<br>Somewhat dislike',
+  '4<br>Neither like nor dislike', '5<br>Somewhat like', '6<br>Like', '7<br>Like very much',
+];
+
+// beef page: three groups in fixed order, items shuffled within each group
+// ('like' always first in the attitude group)
+const beef_attitude = [
+  item('good', 'I think beef is...', bipolar_labels('bad', 'good')),
+  item('positive', 'My opinion of beef is...', bipolar_labels('negative', 'positive')),
+];
+const beef_ambivalence = [
+  item('certainty', 'How certain are you of your attitude towards beef?',
+    unipolar_labels('Not at all certain', 'Very certain')),
+  item('conflicted', 'How conflicted do you feel towards beef?',
+    unipolar_labels('Not at all conflicted', 'Very conflicted')),
+  item('confident', 'How confident do you feel in your attitudes towards beef?',
+    unipolar_labels('Not at all confident', 'Very confident')),
+];
+const beef_other = [
+  item('taste', 'How tasty do you think beef is?',
+    unipolar_labels('Not at all tasty', 'Very tasty')),
+  item('healthy', 'How healthy do you think beef is?', bipolar_labels('unhealthy', 'healthy')),
+  item('env_friendly', 'I think beef is...',
+    bipolar_labels('environmentally harmful', 'environmentally friendly', 'neither harmful nor friendly')),
+  item('ethical', 'I think beef is...', bipolar_labels('unethical', 'ethical')),
+];
+const shuffle = jsPsych.randomization.shuffle;
+
+// same three composite items for the comparison foods (columns explicit_chicken_like, ...)
+function comparison_items(key, noun, verb) {
+  return [
+    item(`${key}_like`, `Overall, how much do you like or dislike ${noun}?`, like_labels),
+    item(`${key}_good`, `I think ${noun} ${verb}...`, bipolar_labels('bad', 'good')),
+    item(`${key}_positive`, `My opinion of ${noun} is...`, bipolar_labels('negative', 'positive')),
+  ];
+}
+
+// responses come back 0-6; save each as 1-7 in its own column
+function save_likert(shown) {
+  return function (data) {
+    Object.entries(data.response).forEach(([k, v]) => { data[`explicit_${k}`] = v + 1; });
+    data.explicit_order = shown().map(q => q.name).join(',');
+  };
+}
+
+let beef_shown = [];
+var explicit_beef = {
+  type: jsPsychSurveyLikert,
+  preamble: '<p>Please answer the following questions about beef.</p>',
+  questions: () => {
+    beef_shown = [
+      item('like', 'Overall, how much do you like or dislike beef?', like_labels),
+      ...shuffle(beef_attitude), ...shuffle(beef_ambivalence), ...shuffle(beef_other),
+    ];
+    return beef_shown;
+  },
+  scale_width: 900,
+  data: { trial_part: 'explicit' },
+  on_finish: save_likert(() => beef_shown),
 };
-timeline.push(amp_block);
+
+// page 2, chicken and desserts: food order randomized, items in fixed order within each food
+let comparison_shown = [];
+var explicit_comparison = {
+  type: jsPsychSurveyLikert,
+  preamble: '<p>Please answer the following questions about chicken and desserts.</p>',
+  questions: () => {
+    comparison_shown = jsPsych.randomization.shuffle([
+      comparison_items('chicken', 'chicken', 'is'),
+      comparison_items('dessert', 'desserts', 'are'),
+    ]).flat();
+    return comparison_shown;
+  },
+  scale_width: 900,
+  data: { trial_part: 'explicit' },
+  on_finish: save_likert(() => comparison_shown),
+};
+
+timeline.push(explicit_beef, explicit_comparison);
+
+
+/* ---------- end of study (asked once) ---------- */
+
+var end_questions = {
+  type: jsPsychSurveyLikert,
+  questions: [
+    item('intend_reduce', 'How likely are you to eat less beef in the next month?',
+      bipolar_labels('unlikely', 'likely')),
+    item('eat_freq', 'How often do you eat beef?', [
+      '1<br>Never', '2<br>Less than once a month', '3<br>1&ndash;3 times a month', '4<br>Once a week',
+      '5<br>2&ndash;4 times a week', '6<br>5&ndash;6 times a week', '7<br>Daily',
+    ]),
+  ],
+  scale_width: 900,
+  data: { trial_part: 'end_questions' },
+  on_finish: function (data) {
+    Object.entries(data.response).forEach(([k, v]) => { data[k] = v + 1; });
+  },
+};
+timeline.push(end_questions);
 
 
 jsPsych.run(timeline);
