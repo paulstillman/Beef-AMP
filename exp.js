@@ -420,7 +420,7 @@ function learning_screen(image, statement, below) {
     <div class="learning_container">
       <img src="${image}" class="learning_img">
       <p class="learning_statement">${statement}</p>
-      ${below}
+      <div class="learning_below">${below}</div>
     </div>`;
 }
 
