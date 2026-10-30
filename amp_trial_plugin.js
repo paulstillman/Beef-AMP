@@ -61,6 +61,9 @@ var jsPsychAmpTrial = (function (jspsych) {
       display_element.querySelectorAll('.amp_layer').forEach(el => { img[el.dataset.layer] = el; });
       const show = (layer) => layers.forEach(l => { img[l].style.visibility = l === layer ? 'visible' : 'hidden'; });
       show(null);
+      // put keyboard focus back on the experiment (jsPsych's other key screens need it)
+      const root = display_element.closest('.jspsych-display-element');
+      if (root) root.focus({ preventScroll: true });
 
       const phases = [
         ['fixation', 'fixation', trial.fixation_duration],
@@ -75,8 +78,8 @@ var jsPsychAmpTrial = (function (jspsych) {
       let last_frame = null;
       let raf = null;
       let done = false;
-      let listener = null;
-      let listener_start = null;
+      let key_handler = null;
+      const valid = trial.choices.map(k => k.toLowerCase());
 
       const frame_ms = () => {
         if (deltas.length === 0) return 1000 / 60;
@@ -88,7 +91,7 @@ var jsPsychAmpTrial = (function (jspsych) {
         if (done) return;
         done = true;
         cancelAnimationFrame(raf);
-        if (listener) this.jsPsych.pluginAPI.cancelKeyboardResponse(listener);
+        if (key_handler) window.removeEventListener('keydown', key_handler, true);
         const end = performance.now();
         const dur = (a, b) => (onset[a] !== undefined ? (onset[b] ?? end) - onset[a] : null);
         this.jsPsych.finishTrial({
@@ -103,9 +106,15 @@ var jsPsychAmpTrial = (function (jspsych) {
         });
       };
 
-      const after_response = (info) => {
-        // info.rt is from when the listener started; convert to ms from target onset
-        finish(info.key, info.rt + (listener_start - onset.target));
+      // Keys are read from the whole window (capture phase), not via jsPsych's listener,
+      // which only hears keys while its display element has focus. If focus moves
+      // (a click, a removed button, the browser), the trial would otherwise wait forever.
+      const on_key = (e) => {
+        if (e.repeat) return;
+        const k = (e.key || '').toLowerCase();
+        if (!valid.includes(k)) return;
+        e.preventDefault();
+        finish(k, performance.now() - onset.target);
       };
 
       // Uses the real time when each frame's callback runs, not the frame timestamp rAF
@@ -125,14 +134,8 @@ var jsPsychAmpTrial = (function (jspsych) {
           show(layer);
           onset[name] = t;
           if (name === 'target') {
-            listener_start = performance.now();
-            listener = this.jsPsych.pluginAPI.getKeyboardResponse({
-              callback_function: after_response,
-              valid_responses: trial.choices,
-              rt_method: 'performance',
-              persist: false,
-              allow_held_key: false,
-            });
+            key_handler = on_key;
+            window.addEventListener('keydown', key_handler, true);
           }
         }
         raf = requestAnimationFrame(tick);
