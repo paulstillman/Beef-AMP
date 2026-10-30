@@ -7,7 +7,7 @@ The same questions are asked twice: after AMP 1 and after AMP 2.
 - Each question has an **ID** (short name used for the data column, e.g. `explicit_like`), the **wording**, the **scale** (1–7 or 1–9), and the **anchors** (labels shown at the ends, plus a midpoint label if you want one).
 - **Group** says whether an item goes in the averaged attitude score (`composite`) or is analyzed on its own (`separate`).
 - To add a question, copy a block. To drop one, delete it or mark it `DROP`.
-- **Labels:** bipolar items (e.g. negative–positive) label every point with its number and a phrase: Very X · X · Somewhat X · Neither X nor Y · Somewhat Y · Y · Very Y. Unipolar items ("Not at all … Very …") label only the endpoints; points 2–6 show just the number. The **Labels** line under each item is exactly what participants see.
+- **Labels:** bipolar items (e.g. negative–positive) label every point with its number and a phrase: Very X · X · Somewhat X · Neither X<br>nor Y (line break before "nor") · Somewhat Y · Y · Very Y. Unipolar items ("Not at all … Very …") label only the endpoints; points 2–6 show just the number. The **Labels** line under each item is exactly what participants see.
 - Questions on the same page appear together. Order within a page is randomized unless you say otherwise.
 
 **Reference: the Kevin measure (Cone et al., 2019, 2021).** Six 7-point items averaged into one score: likeable (very unlikeable–very likeable), bad–good, mean–pleasant, disagreeable–agreeable, uncaring–caring, cruel–kind.
@@ -118,19 +118,29 @@ The same questions are asked twice: after AMP 1 and after AMP 2.
 
 ## End of study (asked once, after everything else)
 
-### intend_reduce
-- **Wording:** How likely are you to eat less beef in the next month?
+### beef_plan
+- **Wording:** Over the next month, I plan to eat...
 - **Scale:** 1–7
-- **Anchors:** 1 = Very unlikely · 7 = Very likely
-- **Labels:** 1 Very unlikely · 2 Unlikely · 3 Somewhat unlikely · 4 Neither unlikely nor likely · 5 Somewhat likely · 6 Likely · 7 Very likely
-- **Group:** separate (intention)
-- **Position:** first on the end page, before `eat_freq`
+- **Labels:** 1 Much less beef · 2 Less beef · 3 Somewhat less beef · 4 The same amount of beef · 5 Somewhat more beef · 6 More beef · 7 Much more beef
+- **Group:** separate (intention; higher = more beef)
+- **Position:** first on the end page
 
 ### eat_freq
 - **Wording:** How often do you eat beef?
 - **Scale:** 1–7
 - **Labels:** 1 Never · 2 Less than once a month · 3 1–3 times a month · 4 Once a week · 5 2–4 times a week · 6 5–6 times a week · 7 Daily
 - **Group:** separate (behavior)
+
+### hunger
+- **Wording:** How hungry are you right now?
+- **Scale:** 1–7
+- **Labels:** 1 Not at all hungry · 2 · 3 · 4 · 5 · 6 · 7 Extremely hungry
+- **Group:** separate (covariate)
+
+### beef_restriction (separate page, select all that apply, required)
+- **Wording:** Is there anything that keeps you from eating beef (for example, religious, dietary, or medical reasons)? Select all that apply.
+- **Options:** No, nothing keeps me from eating beef · Religious reasons · I am vegetarian or vegan · Medical or health reasons (e.g., an allergy or doctor's advice) · Ethical or environmental reasons · Other
+- **Data:** `beef_restriction` (choices joined by "; "), `beef_restricted` (1 if anything other than "No")
 
 ---
 

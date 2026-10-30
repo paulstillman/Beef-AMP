@@ -678,3 +678,25 @@ input[type="radio"]:checked + .label:after {
     color: #888;
     margin-top: 30px;
 }
+
+
+/* AMP trial (amp_trial_plugin.js): all screens' images stacked in one stage, toggled by visibility */
+.amp_stage {
+    position: absolute;
+    inset: 0;
+}
+
+.amp_layer {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    max-width: 480px;
+    max-height: 480px;
+    visibility: hidden;
+}
+
+.amp_layer.amp_mask {
+    width: 480px;
+    height: 480px;
+}

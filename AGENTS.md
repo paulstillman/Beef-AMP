@@ -16,10 +16,17 @@ There is no build step, package manager, or test suite. Everything is plain HTML
 
 - **Live:** https://paulstillman.github.io/Beef-AMP/ (deploys from `main`). Test URL: https://paulstillman.github.io/Beef-AMP/?pid=TEST_paul&nosave
 - **Last verified (commit `524a8fb`, 2026-10-28):** the live site was run with `?nosave`. All images load from GitHub Pages, instructions → ready screen → AMP trials work, and responses land correctly on target or mask rows. A full 60-trial local run gave 20/20/20 trials, each prime image exactly 4 times, and 60 unique targets.
-- **Kurdi timings switched on (2026-10-29):** fixation 500 → prime 100 → blank 100 → target 100 → mask until response. A full 60-trial local `?nosave` run measured fixation ~509 ms and prime/blank/target ~105 ms each (the extra ~5 ms is jsPsych overhead). Not yet checked on the live site.
+- **Kurdi timings switched on (2026-10-29):** fixation 500 (1000 on the first trial of each AMP block) → prime 100 → blank 100 → target 100 → mask until response.
+- **AMP timing fix (2026-10-30):** Paul's real (saving) test run sometimes showed a long fixation and then a prime or target flashed too briefly or skipped. Cause: each screen was its own jsPsych trial, so main-thread work at screen changes could delay painting while the 100 ms timer kept running. The worst offender is likely the DataPipe extension streaming every trial (4–5 writes per AMP trial). Fix: `amp_trial_plugin.js` runs each AMP trial as **one** jsPsych trial. Images are pre-decoded, screens switch on animation frames, there's one data row (and one DataPipe write) per trial, and measured durations are saved. Streaming was also turned off (`stream: false`). Headless-Chrome frame timing tests (see "Timing tests" below):
+  - **No load:** new version prime/blank/target 99–101 ms, fixation 499–501 ms (old version: 100–117 ms, with an extra frame on about half the screens).
+  - **Simulated main-thread freezes** (random 150–300 ms blocks): no version can keep screens exact while the browser is frozen. The old version's screens stretched (prime up to about 390 ms) without any record. In the new version no screen ever ended early (minimum about 93 ms, i.e., 100 ms less half a frame), and stretched screens are recorded in `prime_ms` etc.
+  - A first version of the plugin used rAF's frame timestamp and could cut a screen to one frame after a freeze. It now uses `performance.now()`. Don't switch back.
+  - The exact "prime skipped" symptom wasn't reproduced locally (it needs real DataPipe streaming); with streaming off and the single-trial design, the remaining risk is stretching on a busy machine, which the data now records.
+- **Re-test needed:** Paul should run the live site again (saving) and check `prime_ms`/`target_ms` in the CSV.
 - **Not yet verified:** a *real* save to Google Drive. Do one full run without `?nosave`, confirm `<pid>.csv` appears in the DataPipe Drive folder, then delete it. Data collection must be switched on for the experiment in the DataPipe dashboard.
 - **Possible stray file:** a local preview briefly loaded the page without `?nosave` on 2026-10-28, so a small `*.partial.json` may be in the Drive folder. It's safe to delete.
 - **Full flow built (2026-10-29)** except consent. Paul is running it himself to time it.
+- **Preload is strict:** if any image fails to download, jsPsych shows "The experiment failed to load." and the participant can't continue. This is unlikely on GitHub Pages. Decide whether to allow continuing (`continue_after_error`), at the risk of a missing image.
 - **Next likely tasks:** fact-check learning statements, consent text, debrief, and the pre-AMP messages/manipulation.
 
 ## Overall study flow (Paul, 2026-10-29)
@@ -106,7 +113,7 @@ All primes are ≤480 px on the longest side.
 
 1. `initJsPsych` registers the DataPipe extension (see "Data saving" below). `on_finish` shows the raw data only when `?nosave` is in the URL. Otherwise participants see the extension's "Saving data…" then "Done. You may close this page." messages.
 2. `pid` comes from the URL (sent by the lab router). If it's missing, it's self-generated as `SG_` + 12 random characters. Every row gets `pid`, `pid_source` (`url`/`self_generated`) and `survey_id` (`SV_BeefAMP`). The data file is `${pid}.csv`.
-3. Settings: `timing` (Kurdi values: fixation 500 ms, prime 100 ms, blank 100 ms, target 100 ms, mask until response), `n_reps_per_prime = 4`, `prime_images` (category → file list).
+3. Settings: `timing` (Kurdi values: fixation 500 ms (`first_fixation` 1000 ms on trial 1 of each block), prime 100 ms, blank 100 ms, target 100 ms, mask until response), `n_reps_per_prime = 4`, `prime_images` (category → file list).
 4. Trial lists, built before the timeline by `make_amp_trials(block_name, primes)`:
    - `practice_trials`: the 5 `practice_images` (plates/silverware, `prime_category: 'practice'`), each once, in random order. **Before AMP 1 only.**
    - `amp1_trials`, `amp2_trials`: each is a fresh `main_primes()` (every food prime × `n_reps_per_prime`, shuffled across categories; 60 trials).
@@ -114,14 +121,14 @@ All primes are ≤480 px on the longest side.
    - Fields: `prime_category` (`beef`/`chicken`/`dessert`/`practice`), `prime_file`, `target_file`, `amp_block` (`practice`/`amp1`/`amp2`), `amp_trial` (1–n within block).
 5. `preload`: all targets in use, all primes (including practice), fixation, mask.
 6. `instructions` (jsPsychInstructions, Next/Previous buttons): two pages adapted nearly verbatim from Kurdi et al. Exp. 1, with E/I swapped for D/K and the influence-awareness page dropped. Then `practice_intro` (Kurdi's practice intro, space to start) → practice block → `test_ready` ("Good! The test phase will now begin. Keep going as before." + D/K reminder + "Ready? Press the space bar to begin."). All are tagged `trial_part: 'instructions'`. The timeline order is pushed in one line after `make_amp_block()` is defined.
-7. `make_amp_block(trials)`: `[fixation, prime_screen, blank_screen, target_screen, mask_if_needed]` run over `timeline_variables: trials` (already in random order). Used for practice, AMP 1 and AMP 2.
-   - Every screen uses `amp_screen(img)`: the image centered, with D / "Less Pleasant" bottom-left and K / "More Pleasant" bottom-right. The blank screen is `amp_screen(null)`, which keeps the key labels but shows no image. Keys pressed during fixation, prime or blank are ignored.
-   - `target_screen` shows for `timing.target` and accepts `d`/`k`. A press ends the trial and the mask is skipped (`mask_if_needed` is a conditional timeline that runs only if the target row has no response). Otherwise `mask_screen` stays up until `d`/`k`.
-   - Whichever row got the response (target or mask) gets `pleasant` (1 = k, 0 = d) and `rt_from_target` (ms from target onset; for mask rows = `timing.target` + mask `rt`).
+7. `make_amp_block(trials)`: one `amp_trial` (custom plugin `jsPsychAmpTrial` in `amp_trial_plugin.js`) per row of `trials` (already in random order). Used for practice, AMP 1 and AMP 2.
+   - The plugin puts fixation, prime, target and mask images in one stage (`.amp_stage`/`.amp_layer` in `amp.css`), waits until all are decoded, then shows them in turn by toggling `visibility` on `requestAnimationFrame` (switching when a screen has been up for its duration minus half a frame). Blank = nothing visible. D / "Less Pleasant" and K / "More Pleasant" labels stay at the bottom throughout.
+   - Keys are ignored until target onset. A `d`/`k` during the target ends the trial (no mask). Otherwise the mask (stretched to 480×480) stays until `d`/`k`.
+   - If the tab is hidden, animation frames pause, so the trial pauses too (and the measured durations show it).
 8. `make_explicit('t1')`: beef page, then chicken/desserts page (see "Explicit attitudes" below).
 9. Learning phase: `learning_intro`, then 30 × [`learning_statement`, `learning_feedback`] (see "Learning phase" below).
 10. `amp2_intro` (reminder of the AMP instructions, space to start), AMP 2 block, then `make_explicit('t2')`.
-11. `end_questions` (`intend_reduce`, `eat_freq`; end of study, asked once).
+11. `end_questions` (`beef_plan`, `eat_freq`, `hunger`), then `beef_restriction` (multi-select). End of study, asked once.
 12. No save trial: the extension submits the full CSV automatically when the timeline ends.
 
 ### Explicit attitudes
@@ -130,9 +137,11 @@ Modeled on the Kevin studies' six-item composite: a "likeable" item (1 = very un
 - `make_explicit(time)` builds both pages; it's called with `'t1'` (after AMP 1) and `'t2'` (after AMP 2). Rows carry `explicit_time` (`t1`/`t2`) and `explicit_page` (`beef`/`comparison`).
 - Page 1, beef (jsPsychSurveyLikert, `scale_width: 900`): three groups in fixed order, shuffled within each group: attitude (`like` always first, then `good`/`positive`), ambivalence (`certainty`/`conflicted`/`confident`), other (`taste`/`healthy`/`env_friendly`/`ethical`). Defined in `beef_attitude`, `beef_ambivalence`, `beef_other`.
 - Page 2, comparison: `like`/`good`/`positive` for chicken and for desserts (`chicken_like`, `dessert_good`, …, from `comparison_items()`). The two food blocks appear in random order, with items in fixed order within each.
-- End of study, `end_questions` is asked **once**, as the last trial before the extension saves: `intend_reduce` ("How likely are you to eat less beef in the next month?", bipolar labels), then `eat_freq` ("How often do you eat beef?", 1 Never … 7 Daily). Its row has `trial_part == 'end_questions'`, with answers (1–7) in columns `intend_reduce` and `eat_freq`. Keep it last when the Time 2 blocks are added.
+- End of study (asked **once**, after explicit T2, last before the extension saves), both rows `trial_part == 'end_questions'`:
+  - `end_questions` (Likert, 1–7, saved in columns of the same name): `beef_plan` ("Over the next month, I plan to eat..." 1 Much less beef … 4 The same amount of beef … 7 Much more beef; replaced `intend_reduce` on 2026-10-30, note that **higher = more beef**), `eat_freq` ("How often do you eat beef?", 1 Never … 7 Daily), `hunger` ("How hungry are you right now?", 1 Not at all hungry … 7 Extremely hungry; numbers only between).
+  - `beef_restriction` (jsPsychSurveyMultiSelect, required, select all): "Is there anything that keeps you from eating beef (for example, religious, dietary, or medical reasons)?" Options: No / Religious / Vegetarian or vegan / Medical or health / Ethical or environmental / Other. Saved as `beef_restriction` (choices joined by "; ") and `beef_restricted` (1 if any option other than "No"). "No" plus another option isn't prevented.
 - All items are 1–7 for now. Wording and labels are in `explicit_questions.md`.
-- Labels: bipolar items label every point "N<br>phrase" (built by `bipolar_labels(low, high, mid)`). Unipolar "not at all … very" items label only points 1 and 7 (`unipolar_labels(low, high)`).
+- Labels: bipolar items label every point "N<br>phrase" (built by `bipolar_labels(low, high, mid)`). The midpoint breaks before "nor" ("Neither negative<br>nor positive"). Unipolar "not at all … very" items label only points 1 and 7 (`unipolar_labels(low, high)`).
 - All items are required. Each answer is saved as 1–7 in its own column (`explicit_like`, `explicit_good`, …) on the two rows with `trial_part == 'explicit'`. Each row's `explicit_order` lists that page's item names in display order.
 - `amp.css` has a rule at the bottom that undoes the old global `input { width:200px; height:50px }` for these radio buttons.
 
@@ -140,7 +149,7 @@ Modeled on the Kevin studies' six-item composite: a "likeable" item (1 = very un
 
 - DataPipe experiment ID **`4OEY2BEtOzsk`** (Google Drive storage, created 2026-10-28). Files land in a folder for the experiment under `My Drive/DataPipe/` (or a parent folder Paul chose), in `data/`.
 - The old OSF experiment `0fKnOsyHzKUQ` is retired. DataPipe stops writing to OSF after 2026-11-16. Anything it collected stays on OSF.
-- Uses `@jspsych/extension-pipe@0.2.0`, registered in `initJsPsych({ extensions: [...] })`. It **streams each trial** as it finishes, then submits `${pid}.csv` at the end. A participant who quits partway leaves a `<filename>-<id>.partial.json` file instead. Treat those as non-completers in analysis, and mention partial-data retention in the IRB protocol.
+- Uses `@jspsych/extension-pipe@0.2.0`, registered in `initJsPsych({ extensions: [...] })`, with **`stream: false`** (Paul, 2026-10-30): no per-trial writes, just one submission of `${pid}.csv` at the end. Streaming was turned off because its per-trial network work competes with the 100 ms AMP screens. Consequence: participants who quit partway leave **no data** (no `.partial.json` files).
 - **`?nosave` URL flag** sets the extension's `enabled: false`: no session, no streaming, no submission. Use it for all testing.
 - The extension and jsPsych 8 go together. The old `@jspsych-contrib/plugin-pipe` save trial is gone, and versions ≥0.5 of that plugin need jsPsych 8 anyway.
 - Docs: https://pipe.jspsych.org/docs (see "What's changed", "Saving as you go").
@@ -166,7 +175,11 @@ Participants run in the lab's Qualtrics **session router** (Paul's `qualtrics-ro
 
 ### Data columns added by the AMP
 
-On every fixation/prime/blank/target/mask row (via `amp_data()`): `trial_part` (`fixation`/`prime`/`blank`/`target`/`mask`), `amp_block` (`practice`/`amp1`/`amp2`), `amp_trial`, `prime_category` (`beef`/`chicken`/`dessert`), `prime_file`, `target_file`. The response row (target **or** mask, per above) also has `response`, `rt` (from that screen's onset), `pleasant`, `rt_from_target`. For analysis, keep rows where `pleasant` is not missing **and `amp_block != "practice"`**. That gives exactly one row per AMP trial; use `trial_part` to see whether the response came during the target or the mask.
+**One row per AMP trial** (since 2026-10-30), `trial_part == 'amp'`: `amp_block` (`practice`/`amp1`/`amp2`), `amp_trial`, `prime_category` (`beef`/`chicken`/`dessert`/`practice`), `prime_file`, `target_file`, `response` (d/k), `rt` (**ms from target onset**), `pleasant` (1 = k, 0 = d), `responded_during` (`target`/`mask`), and the measured on-screen durations `fixation_ms`, `prime_ms`, `blank_ms`, `target_ms` (target_ms runs until mask onset, or until the response if it came during the target), plus `frame_ms` (median frame interval, about 16.7 on a 60 Hz screen). For analysis, filter `trial_part == "amp"` and `amp_block != "practice"`. For **timing QC**, flag trials whose `prime_ms` or `target_ms` is far from 100 (e.g., outside 80–125).
+
+### Timing tests
+
+`timing_test.py` (kept in Claude's scratchpad, not the repo; easy to recreate) runs the experiment in headless Chrome. Serve the folder with a threaded server with a large request queue (Python's `http.server` resets connections under the ~140 parallel preload requests, which makes preload fail with "The experiment failed to load."). The harness (`--headless=new`, driven over the DevTools protocol with `websocket-client`), logs which screen is visible on every animation frame, and reports per-trial fixation/prime/blank/target durations. It can add simulated main-thread load (blocking bursts at random times) to mimic the DataPipe streaming. Results from 2026-10-30 are summarized in the chat history and in the Status section.
 
 ## Known issues / unfinished work
 

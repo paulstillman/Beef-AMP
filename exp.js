@@ -11,8 +11,9 @@ const NOSAVE = new URLSearchParams(location.search).has('nosave');
 const SURVEY_ID = 'SV_BeefAMP';
 const ROUTER_URL = 'https://bostonu.qualtrics.com/jfe/form/SV_bPg2NmkSI0V5hwW';
 
-// DataPipe (Google Drive) via the pipe extension: each trial is streamed as it
-// happens, and the full CSV is submitted when the experiment ends
+// DataPipe (Google Drive) via the pipe extension. stream: false = no per-trial writes
+// during the study (they compete with the 100 ms AMP screens); the full CSV is
+// submitted once, when the experiment ends
 const jsPsych = initJsPsych({
   extensions: [
     {
@@ -20,6 +21,7 @@ const jsPsych = initJsPsych({
       params: {
         experiment_id: "4OEY2BEtOzsk",
         filename: () => `${pid}.csv`,
+        stream: false,
         enabled: !NOSAVE,
       },
     },
@@ -53,6 +55,7 @@ let timeline = [];
 
 // durations in ms, following Kurdi et al. (2023), Exp. 1
 const timing = {
+  first_fixation: 1000, // first trial of each AMP block (right after the "press space" screen)
   fixation: 500,
   prime: 100,
   blank: 100,
@@ -125,6 +128,7 @@ function make_amp_trials(block_name, primes) {
     target_file: targets[i],
     amp_block: block_name,
     amp_trial: i + 1,
+    fixation_duration: i === 0 ? timing.first_fixation : timing.fixation,
   }));
 }
 
@@ -194,91 +198,36 @@ var test_ready = {
 };
 
 
-// tags every row (fixation, prime, target, mask) with the trial's prime/target info
-function amp_data(trial_part) {
-  return {
-    trial_part: trial_part,
+// one jsPsych trial per AMP trial (see amp_trial_plugin.js for why); one data row each
+var amp_trial = {
+  type: jsPsychAmpTrial,
+  fixation_image: './img/fixation.png',
+  prime_image: jsPsych.timelineVariable('prime_file'),
+  target_image: jsPsych.timelineVariable('target_file'),
+  mask_image: './img/ampmask.jpg',
+  fixation_duration: jsPsych.timelineVariable('fixation_duration'),
+  prime_duration: timing.prime,
+  blank_duration: timing.blank,
+  target_duration: timing.target,
+  choices: ['d', 'k'],
+  labels: `<div class="text_left_v2">D<br>Less Pleasant</div>
+           <div class="text_right_v2">K<br>More Pleasant</div>`,
+  data: {
+    trial_part: 'amp',
     amp_block: jsPsych.timelineVariable('amp_block'),
     amp_trial: jsPsych.timelineVariable('amp_trial'),
     prime_category: jsPsych.timelineVariable('prime_category'),
     prime_file: jsPsych.timelineVariable('prime_file'),
     target_file: jsPsych.timelineVariable('target_file'),
-  };
-}
-
-// img_style lets the 256px mask be stretched to cover the 480px targets.
-// img_src = null gives the blank screen (key labels only)
-function amp_screen(img_src, img_style = '') {
-  const img = img_src === null ? '' : `<img src="${img_src}" class="image_amp_v2" style="${img_style}">`;
-  return `
-    <div class="container_amp_v2">
-      ${img}
-      <div class="text_left_v2">D<br>Less Pleasant</div>
-      <div class="text_right_v2">K<br>More Pleasant</div>
-    </div>`;
-}
-
-var fixation = {
-  type: jsPsychHtmlKeyboardResponse,
-  stimulus: amp_screen('./img/fixation.png'),
-  choices: "NO_KEYS",
-  trial_duration: timing.fixation,
-  data: amp_data('fixation'),
-};
-
-var prime_screen = {
-  type: jsPsychHtmlKeyboardResponse,
-  stimulus: () => amp_screen(jsPsych.evaluateTimelineVariable('prime_file')),
-  choices: "NO_KEYS",
-  trial_duration: timing.prime,
-  data: amp_data('prime'),
-};
-
-var blank_screen = {
-  type: jsPsychHtmlKeyboardResponse,
-  stimulus: amp_screen(null),
-  choices: "NO_KEYS",
-  trial_duration: timing.blank,
-  data: amp_data('blank'),
-};
-
-// response can come during the target or the mask; whichever row has it gets
-// pleasant (1 = k, 0 = d) and rt_from_target (ms from target onset)
-var target_screen = {
-  type: jsPsychHtmlKeyboardResponse,
-  stimulus: () => amp_screen(jsPsych.evaluateTimelineVariable('target_file')),
-  choices: ['d', 'k'],
-  trial_duration: timing.target,
-  data: amp_data('target'),
-  on_finish: function (data) {
-    if (data.response !== null) {
-      data.pleasant = data.response === 'k' ? 1 : 0;
-      data.rt_from_target = data.rt;
-    }
   },
-};
-
-var mask_screen = {
-  type: jsPsychHtmlKeyboardResponse,
-  stimulus: amp_screen('./img/ampmask.jpg', 'width:480px; height:480px;'),
-  choices: ['d', 'k'],
-  trial_duration: null,
-  data: amp_data('mask'),
   on_finish: function (data) {
     data.pleasant = data.response === 'k' ? 1 : 0;
-    data.rt_from_target = timing.target + data.rt;
   },
-};
-
-// mask only runs if there was no response during the target
-var mask_if_needed = {
-  timeline: [mask_screen],
-  conditional_function: () => jsPsych.data.get().last(1).values()[0].response === null,
 };
 
 function make_amp_block(trials) {
   return {
-    timeline: [fixation, prime_screen, blank_screen, target_screen, mask_if_needed],
+    timeline: [amp_trial],
     timeline_variables: trials,
   };
 }
@@ -292,7 +241,7 @@ timeline.push(instructions, practice_intro, make_amp_block(practice_trials),
 // Items, scales and labels are defined in explicit_questions.md; keep in sync.
 // Bipolar items label every point ("1<br>Very negative" ... "7<br>Very positive").
 // Unipolar "not at all ... very" items label only the endpoints; the rest are numbers.
-function bipolar_labels(low, high, mid = `Neither ${low} nor ${high}`) {
+function bipolar_labels(low, high, mid = `Neither ${low}<br>nor ${high}`) {
   const cap = x => x[0].toUpperCase() + x.slice(1);
   return [`Very ${low}`, cap(low), `Somewhat ${low}`, cap(mid),
           `Somewhat ${high}`, cap(high), `Very ${high}`].map((l, i) => `${i + 1}<br>${l}`);
@@ -309,7 +258,7 @@ function item(name, prompt, labels) {
 
 const like_labels = [
   '1<br>Dislike very much', '2<br>Dislike', '3<br>Somewhat dislike',
-  '4<br>Neither like nor dislike', '5<br>Somewhat like', '6<br>Like', '7<br>Like very much',
+  '4<br>Neither like<br>nor dislike', '5<br>Somewhat like', '6<br>Like', '7<br>Like very much',
 ];
 
 // beef page: three groups in fixed order, items shuffled within each group
@@ -331,7 +280,7 @@ const beef_other = [
     unipolar_labels('Not at all tasty', 'Very tasty')),
   item('healthy', 'How healthy do you think beef is?', bipolar_labels('unhealthy', 'healthy')),
   item('env_friendly', 'I think beef is...',
-    bipolar_labels('environmentally harmful', 'environmentally friendly', 'neither harmful nor friendly')),
+    bipolar_labels('environmentally harmful', 'environmentally friendly', 'neither harmful<br>nor friendly')),
   item('ethical', 'I think beef is...', bipolar_labels('unethical', 'ethical')),
 ];
 const shuffle = jsPsych.randomization.shuffle;
@@ -516,12 +465,16 @@ timeline.push(amp2_intro, make_amp_block(amp2_trials), ...make_explicit('t2'));
 var end_questions = {
   type: jsPsychSurveyLikert,
   questions: [
-    item('intend_reduce', 'How likely are you to eat less beef in the next month?',
-      bipolar_labels('unlikely', 'likely')),
+    item('beef_plan', 'Over the next month, I plan to eat...', [
+      '1<br>Much less beef', '2<br>Less beef', '3<br>Somewhat less beef', '4<br>The same amount<br>of beef',
+      '5<br>Somewhat more beef', '6<br>More beef', '7<br>Much more beef',
+    ]),
     item('eat_freq', 'How often do you eat beef?', [
       '1<br>Never', '2<br>Less than once a month', '3<br>1&ndash;3 times a month', '4<br>Once a week',
       '5<br>2&ndash;4 times a week', '6<br>5&ndash;6 times a week', '7<br>Daily',
     ]),
+    item('hunger', 'How hungry are you right now?',
+      unipolar_labels('Not at all hungry', 'Extremely hungry')),
   ],
   scale_width: 900,
   data: { trial_part: 'end_questions' },
@@ -529,7 +482,31 @@ var end_questions = {
     Object.entries(data.response).forEach(([k, v]) => { data[k] = v + 1; });
   },
 };
-timeline.push(end_questions);
+
+const restriction_options = [
+  'No, nothing keeps me from eating beef',
+  'Religious reasons',
+  'I am vegetarian or vegan',
+  'Medical or health reasons (e.g., an allergy or doctor\'s advice)',
+  'Ethical or environmental reasons',
+  'Other',
+];
+var beef_restriction = {
+  type: jsPsychSurveyMultiSelect,
+  questions: [{
+    name: 'beef_restriction',
+    prompt: 'Is there anything that keeps you from eating beef (for example, religious, dietary, or medical reasons)? Select all that apply.',
+    options: restriction_options,
+    required: true,
+  }],
+  data: { trial_part: 'end_questions' },
+  on_finish: function (data) {
+    const chosen = data.response.beef_restriction;
+    data.beef_restriction = chosen.join('; ');
+    data.beef_restricted = chosen.some(c => c !== restriction_options[0]) ? 1 : 0;
+  },
+};
+timeline.push(end_questions, beef_restriction);
 
 
 jsPsych.run(timeline);
