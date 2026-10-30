@@ -76,6 +76,7 @@ const timing = {
 
 const n_reps_per_prime = 4; // 5 images x 4 reps = 20 trials per category
 const n_targets_available = 200;
+const example_painting = 1; // pic1 is shown in the instruction diagram, so it's never a target
 
 // practice (before AMP 1 only): each image once. Sources/licenses in img/practice/CREDITS.md
 const practice_images = [
@@ -115,7 +116,7 @@ const prime_images = {
 
 // each target painting is used at most once across all AMP blocks (practice, AMP 1, AMP 2)
 const target_pool = jsPsych.randomization.shuffle(
-  Array.from({ length: n_targets_available }, (_, i) => i + 1)
+  Array.from({ length: n_targets_available }, (_, i) => i + 1).filter(v => v !== example_painting)
 );
 function take_targets(n) {
   return target_pool.splice(0, n).map(v => `./img/targets_resized/pic${v}.png`);
@@ -143,8 +144,9 @@ function make_amp_trials(block_name, primes) {
   }));
 }
 
+// 10 practice trials: each practice image twice
 const practice_trials = make_amp_trials('practice', jsPsych.randomization.shuffle(
-  practice_images.map(file => ({ prime_category: 'practice', prime_file: file }))
+  practice_images.flatMap(file => Array(2).fill({ prime_category: 'practice', prime_file: file }))
 ));
 const amp1_trials = make_amp_trials('amp1', main_primes());
 const amp2_trials = make_amp_trials('amp2', main_primes());
@@ -161,7 +163,8 @@ const RETRY_KEY = 'beef_amp_load_retries';
 var preload = {
   type: jsPsychPreload,
   images: [...practice_trials, ...amp1_trials, ...amp2_trials].map(t => t.target_file)
-    .concat(Object.values(prime_images).flat(), practice_images, ['./img/fixation.png', './img/ampmask.jpg']),
+    .concat(Object.values(prime_images).flat(), practice_images,
+      ['./img/fixation.png', './img/ampmask.jpg', `./img/targets_resized/pic${example_painting}.png`]),
   continue_after_error: true,
   on_finish: function (data) {
     let retries = 0;
@@ -225,22 +228,34 @@ var consent = {
 };
 timeline.push(preload, consent);
 
-/* ---------- instructions (adapted from Kurdi et al., 2023, Exp. 1) ---------- */
+/* ---------- instructions (adapted from Kurdi et al., 2023, Exp. 1; diagram added 2026-10-30) ---------- */
 
-var instr_page1 = `<div class='instructions'>
-<p>This study examines how people make simple judgments.</p>
-<p>During the task, you will see pairs of pictures appear one after the other.</p>
-<p>The first picture will be a real-life image and the second picture will be an abstract painting.</p>
-<p>The first image is simply a warning signal for the abstract painting and should be ignored.</p>
-<p>Your task is to judge how visually pleasant each abstract painting is.</p>
+var instr_page1 = `<div class='instructions instr_wide'>
+<p>In this task, you will see <b>two images</b> flash on the screen <b>very quickly</b>, one right after the other.</p>
+<div class="instr_seq">
+  <div class="instr_panel"><div class="instr_box"><img src="./img/fixation.png" style="max-width:60px"></div>
+    <div class="instr_lab">Get ready<br><span class="instr_time">(half a second)</span></div></div>
+  <div class="instr_arrow">&rarr;</div>
+  <div class="instr_panel"><div class="instr_box instr_ignore_box"><img src="./img/practice/plate_set.jpg"></div>
+    <div class="instr_lab"><span class="instr_ignore">IGNORE this</span><br>real-life image<br><span class="instr_time">(very brief)</span></div></div>
+  <div class="instr_arrow">&rarr;</div>
+  <div class="instr_panel"><div class="instr_box instr_judge_box"><img src="./img/targets_resized/pic${example_painting}.png"></div>
+    <div class="instr_lab"><span class="instr_judge">JUDGE this</span><br>Is this painting <b>more</b> or <b>less</b> pleasant than average?<br><span class="instr_time">(very brief)</span></div></div>
+  <div class="instr_arrow">&rarr;</div>
+  <div class="instr_panel"><div class="instr_box"><img src="./img/ampmask.jpg" style="width:186px;height:186px"></div>
+    <div class="instr_lab">Static<br>press your key now:<br><b>D</b> = less pleasant<br><b>K</b> = more pleasant</div></div>
+</div>
+<p>The first image is <b>just a distractor</b>, so <b>ignore it</b>. Your job is to judge <b>only the abstract painting</b>.</p>
 </div>`;
 
 var instr_page2 = `<div class='instructions'>
-<p>Put your index fingers on the D and K keys of your keyboard.</p>
-<p>If the abstract painting is <b>less</b> visually pleasant than average, please press the <b>D</b> key on the left.</p>
-<p>If the abstract painting is <b>more</b> visually pleasant than average, please press the <b>K</b> key on the right.</p>
-<p>Note that the first (real-life) image can sometimes bias judgments of the abstract paintings.
-Please try your absolute best not to let the real-life images bias your judgment of the abstract paintings.</p>
+<p>Put your index fingers on the <b>D</b> and <b>K</b> keys.</p>
+<p>If the painting is <b>less</b> visually pleasant than average, press <b>D</b>.<br>
+If the painting is <b>more</b> visually pleasant than average, press <b>K</b>.</p>
+<p>The images go by <b>very fast</b>, so <b>pay close attention</b>. The painting may only be on the screen
+for a split second. Go with your <b>gut reaction</b> to it.</p>
+<p>The real-life image can sometimes <b>bias</b> your judgment of the painting. Please try your
+<b>absolute best</b> not to let it influence you.</p>
 </div>`;
 
 var instructions = {
@@ -248,6 +263,42 @@ var instructions = {
   pages: [instr_page1, instr_page2],
   show_clickable_nav: true,
   data: { trial_part: 'instructions' },
+};
+
+// comprehension check: loops back to the instructions until both answers are right
+const comp_answers = {
+  comp_judge: 'The abstract painting',
+  comp_key: 'K',
+};
+let comp_attempts = 0;
+var comprehension = {
+  type: jsPsychSurveyMultiChoice,
+  preamble: '<p><b>Before you start, please answer two quick questions.</b></p>',
+  questions: [
+    { name: 'comp_judge', prompt: 'In this task, what are you judging?', required: true,
+      options: ['The real-life image (the photo)', 'The abstract painting', 'The static', 'Both images'] },
+    { name: 'comp_key', prompt: 'Which key do you press if the painting is <b>more</b> pleasant than average?',
+      required: true, options: ['D', 'K'] },
+  ],
+  data: { trial_part: 'comprehension' },
+  on_finish: function (data) {
+    comp_attempts += 1;
+    data.comp_attempt = comp_attempts;
+    data.comp_correct = Object.entries(comp_answers).every(([k, v]) => data.response[k] === v) ? 1 : 0;
+  },
+};
+var comprehension_retry = {
+  timeline: [{
+    type: jsPsychHtmlButtonResponse,
+    stimulus: '<p class="consent_prompt">Not quite. Please read the instructions again.</p>',
+    choices: ['Back to the instructions'],
+    data: { trial_part: 'comprehension_retry' },
+  }],
+  conditional_function: () => jsPsych.data.get().last(1).values()[0].comp_correct === 0,
+};
+var instructions_loop = {
+  timeline: [instructions, comprehension, comprehension_retry],
+  loop_function: () => jsPsych.data.get().filter({ trial_part: 'comprehension' }).last(1).values()[0].comp_correct === 0,
 };
 
 var practice_intro = {
@@ -309,7 +360,7 @@ function make_amp_block(trials) {
   };
 }
 
-timeline.push(instructions, practice_intro, make_amp_block(practice_trials),
+timeline.push(instructions_loop, practice_intro, make_amp_block(practice_trials),
   test_ready, make_amp_block(amp1_trials));
 
 
@@ -487,6 +538,8 @@ var learning_statement = {
   choices: ['a', 'i'],
   data: learning_data('learning'),
   on_finish: function (data) {
+    // jsPsych accepts 'A'/'I' (Caps Lock or Shift) but records the key as typed, so lowercase it
+    data.response = (data.response || '').toLowerCase();
     data.said_accurate = data.response === 'a';
     data.learning_correct = data.said_accurate === data.learning_accurate;
   },
@@ -524,8 +577,8 @@ var amp2_intro = {
   stimulus: `<div class='instructions'>
     <p>You will now do the picture task from earlier one more time.</p>
     <p>As before, you will see a real-life image followed by an abstract painting.
-    The first image is simply a warning signal and should be ignored.
-    Your task is to judge how visually pleasant each abstract painting is.</p>
+    The first image is <b>just a distractor</b>, so <b>ignore it</b>.
+    Your task is to judge <b>only the abstract painting</b>: is it more or less visually pleasant than average?</p>
     <p>If the abstract painting is less visually pleasant than average, press the <b>D</b> key.
     If it is more visually pleasant than average, press the <b>K</b> key.</p>
     <p>Please try your absolute best not to let the real-life images bias your judgment of the abstract paintings.</p>
