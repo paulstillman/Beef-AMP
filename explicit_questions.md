@@ -29,14 +29,14 @@ The same questions are asked twice: after AMP 1 and after AMP 2.
 - **Position:** always first
 
 ### good
-- **Wording:** I think beef is...
+- **Wording:** Overall, do you think beef is good or bad?
 - **Scale:** 1–7
 - **Anchors:** 1 = Very Bad · 7 = Very Good
 - **Labels:** 1 Very bad · 2 Bad · 3 Somewhat bad · 4 Neither bad nor good · 5 Somewhat good · 6 Good · 7 Very good
 - **Group:** composite
 
 ### positive
-- **Wording:** My opinion of beef is...
+- **Wording:** Overall, how positively or negatively do you feel towards beef?
 - **Scale:** 1–7
 - **Anchors:** 1 = Very Negative · 7 = Very Positive
 - **Labels:** 1 Very negative · 2 Negative · 3 Somewhat negative · 4 Neither negative nor positive · 5 Somewhat positive · 6 Positive · 7 Very positive
@@ -78,14 +78,14 @@ The same questions are asked twice: after AMP 1 and after AMP 2.
 - **Group:** separate
 
 ### env_friendly
-- **Wording:** I think beef is...
+- **Wording:** How environmentally friendly do you think beef is?
 - **Scale:** 1–7
 - **Anchors:** 1 = Very Environmentally harmful · 7 = Very Environmentally friendly
 - **Labels:** 1 Very environmentally harmful · 2 Environmentally harmful · 3 Somewhat environmentally harmful · 4 Neither harmful nor friendly · 5 Somewhat environmentally friendly · 6 Environmentally friendly · 7 Very environmentally friendly
 - **Group:** separate
 
 ### ethical
-- **Wording:** I think beef is...
+- **Wording:** How ethical do you think beef is?
 - **Scale:** 1–7
 - **Anchors:** 1 = Very Unethical · 7 = Very Ethical
 - **Labels:** 1 Very unethical · 2 Unethical · 3 Somewhat unethical · 4 Neither unethical nor ethical · 5 Somewhat ethical · 6 Ethical · 7 Very ethical
@@ -105,12 +105,12 @@ The same questions are asked twice: after AMP 1 and after AMP 2.
 - **Group:** composite (per food)
 
 ### chicken_good / dessert_good
-- **Wording:** I think chicken is... / I think desserts are...
+- **Wording:** Overall, do you think chicken is good or bad? / Overall, do you think desserts are good or bad?
 - **Scale:** 1–7 (labels as `good`)
 - **Group:** composite (per food)
 
 ### chicken_positive / dessert_positive
-- **Wording:** My opinion of chicken is... / My opinion of desserts is...
+- **Wording:** Overall, how positively or negatively do you feel towards chicken? / ...towards desserts?
 - **Scale:** 1–7 (labels as `positive`)
 - **Group:** composite (per food)
 

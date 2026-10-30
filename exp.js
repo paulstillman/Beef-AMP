@@ -318,8 +318,8 @@ const like_labels = [
 // beef page: three groups in fixed order, items shuffled within each group
 // ('like' always first in the attitude group)
 const beef_attitude = [
-  item('good', 'I think beef is...', bipolar_labels('bad', 'good')),
-  item('positive', 'My opinion of beef is...', bipolar_labels('negative', 'positive')),
+  item('good', 'Overall, do you think beef is good or bad?', bipolar_labels('bad', 'good')),
+  item('positive', 'Overall, how positively or negatively do you feel towards beef?', bipolar_labels('negative', 'positive')),
 ];
 const beef_ambivalence = [
   item('certainty', 'How certain are you of your attitude towards beef?',
@@ -333,9 +333,9 @@ const beef_other = [
   item('taste', 'How tasty do you think beef is?',
     unipolar_labels('Not at all tasty', 'Very tasty')),
   item('healthy', 'How healthy do you think beef is?', bipolar_labels('unhealthy', 'healthy')),
-  item('env_friendly', 'I think beef is...',
+  item('env_friendly', 'How environmentally friendly do you think beef is?',
     bipolar_labels('environmentally harmful', 'environmentally friendly', 'neither harmful<br>nor friendly')),
-  item('ethical', 'I think beef is...', bipolar_labels('unethical', 'ethical')),
+  item('ethical', 'How ethical do you think beef is?', bipolar_labels('unethical', 'ethical')),
 ];
 const shuffle = jsPsych.randomization.shuffle;
 
@@ -343,8 +343,8 @@ const shuffle = jsPsych.randomization.shuffle;
 function comparison_items(key, noun, verb) {
   return [
     item(`${key}_like`, `Overall, how much do you like or dislike ${noun}?`, like_labels),
-    item(`${key}_good`, `I think ${noun} ${verb}...`, bipolar_labels('bad', 'good')),
-    item(`${key}_positive`, `My opinion of ${noun} is...`, bipolar_labels('negative', 'positive')),
+    item(`${key}_good`, `Overall, do you think ${noun} ${verb} good or bad?`, bipolar_labels('bad', 'good')),
+    item(`${key}_positive`, `Overall, how positively or negatively do you feel towards ${noun}?`, bipolar_labels('negative', 'positive')),
   ];
 }
 
