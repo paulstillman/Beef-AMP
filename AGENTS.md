@@ -89,16 +89,14 @@ Source PDFs are outside the repo, in Paul's Dropbox at `Research/beef_amp/kurdi_
 
 | Path | Role |
 |---|---|
-| `index.html` | Entry point. Loads jsPsych + plugins from unpkg, `targets.js`, `amp.css`, then `exp.js`. Contains a large commented-out canvas demo that can be removed. |
+| `index.html` | Entry point. Loads jsPsych + plugins (pinned, unpkg), `amp_trial_plugin.js`, `learning_items.js`, `amp.css`, then `exp.js`. |
 | `exp.js` | **The experiment.** Settings block at the top (`timing`, `n_reps_per_prime`, `prime_images`), then builds the trial list and timeline and calls `jsPsych.run`. This is the file to edit. |
-| `exp_old_working.js` | Older snapshot of `exp.js` (prime 1000 ms, older `container_amp` layout). Reference only; not loaded. |
-| `amp.css` | Styles. Mostly inherited boilerplate from an earlier mouse-tracking project (questionnaire, radio buttons, `mt-response-btn`, etc.). The AMP actually uses `.container_amp_v2`, `.image_amp_v2`, `.text_left_v2`, `.text_right_v2`. The `v1` classes (`.container_amp`, `.text_left`, ...) are used only by `exp_old_working.js`. |
+| `amp.css` | Styles. Mostly inherited boilerplate from an earlier mouse-tracking project (questionnaire, radio buttons, `mt-response-btn`, etc.). The AMP actually uses `.container_amp_v2`, `.image_amp_v2`, `.text_left_v2`, `.text_right_v2`. The `v1` classes (`.container_amp`, `.text_left`, ...) are unused. |
 | `learning_items.js` | **Generated** by `build_learning.py` from `learning_statements.md` (defines `learning_items`). Loaded by `index.html`. Don't edit by hand. |
 | `build_learning.py` | Parses `learning_statements.md` (`**E1.** statement`, `- Answer:`, `- Feedback source:`) into `learning_items.js`. **Rerun after every edit to the statements:** `python3 build_learning.py`. It prints counts per domain × accurate (should be 5 each). |
-| `targets.js` | Old, unused (points at the deleted `img/targets/`). No longer loaded by `index.html`; safe to delete. |
 | `learning_statements.md` | **Source of truth for the learning-phase statements** (30 drafts: environment/health/animal welfare × 5 accurate downsides + 5 inaccurate upside claims, each with answer, feedback line and source). Draft as of 2026-10-29; Paul/Melissa/Arin to edit and fact-check before it's built. Also lists problems with facts in the 2024 slide deck. |
+| `prereg_aspredicted.txt` | **Preregistration (AsPredicted, plain text, ready to paste)**, edited by Paul 2026-10-30. Paul's `pre-registration` skill (`~/.claude/skills/pre-registration/`) captures his style. It's modeled on Cone et al. (2019) Study 5; the Cone preregistration PDFs are in Dropbox at `Research/beef_amp/cone_preregs/` (none are AsPredicted; they're free-form OSF documents). |
 | `explicit_questions.md` | **Source of truth for the explicit-attitude items** (wording, 1–7/1–9 scale, anchors, composite vs separate, page layout). Paul edits it; then update `exp.js` to match. |
-| `resize_targets.py` | One-off PIL script that resized `img/targets/*` → `img/targets_resized/*` at 480×480. Uses `Image.ANTIALIAS` (removed in Pillow ≥10; use `Image.LANCZOS` if rerun). |
 | `img/fixation.png` | Fixation image shown before each prime. |
 | `img/ampmask.jpg` | Black-and-white noise backward mask (256×256, displayed stretched to 480×480 so it fully covers the target). |
 | `img/targets_resized/pic1.png` … `pic200.png` | AMP targets: abstract paintings (480×480), the set Benedek Kurdi used. |
@@ -196,7 +194,7 @@ Updated 2026-10-29. Confirm with Paul before "fixing" design choices.
 - **No debrief yet.** Consent is in (flow step 4b).
 - **Prime repeats aren't spread out.** The 60 trials are fully shuffled, so the same image can appear on back-to-back trials. Kurdi instead cycled through the prime set without replacement. Revisit if that matters.
 - **Key-side counterbalancing** is not implemented (D is always "Less Pleasant"). Kurdi didn't counterbalance either.
-- **Unused files:** `targets.js` (still loaded by `index.html`), `exp_old_working.js`, the commented-out canvas demo in `index.html`, and most of `amp.css`.
+- Most of `amp.css` is unused boilerplate from an older mouse-tracking project (questionnaire, radio, `mt-response-btn`, `.container_amp`/`.text_left` v1 classes). It's harmless and could be trimmed.
 - `amp.css` imports Google Fonts over `http://`, which browsers block as mixed content on GitHub Pages (https). Harmless, since text falls back to Open Sans/Arial, but worth cleaning up.
 
 ## Conventions / how to work here

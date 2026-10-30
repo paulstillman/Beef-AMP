@@ -17,52 +17,6 @@
   <title>Image Task</title>
 </head>
   <body>
-      
-      <!--<div id="top_left_text_div" class="bordered_text_box" style="float: left; margin:25px">
-      </div>
-      <div id="top_right_text_div" class="bordered_text_box" style="float: right; margin:25px">
-      </div>-->
-
-
-
-
-      <!--<script>
-        const jsPsych = initJsPsych({
-          on_finish: function() {
-            jsPsych.data.displayData();
-          }
-        });
-
-        // Define a function to create the bounded rectangle
-        function createBoundedRectangle() {
-          var canvas = document.createElement("canvas");
-          canvas.className = "canvas";
-          canvas.width = 400;
-          canvas.height = 300;
-
-          var ctx = canvas.getContext("2d");
-          ctx.fillStyle = "blue";
-          ctx.fillRect(50, 50, 300, 200); // Adjust the coordinates and size as needed
-          return canvas;
-        }
-
-        var displayRectangleTrial = {
-          type: jsPsychImageKeyboardResponse,
-          stimulus: function() {
-            var canvas = createBoundedRectangle();
-            return canvas.outerHTML;
-          },
-          choices: 32 // Prevent keyboard input
-        };
-        timeline = [];
-
-        timeline.push(displayRectangleTrial);
-
-            
-        // Run the experiment
-        jsPsych.run(timeline);
-      </script>-->
-      
       <script src="./exp.js"></script>
   </body>
 </html>

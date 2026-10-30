@@ -1,0 +1,55 @@
+1) Have any data been collected for this study already?
+
+No, no data have been collected for this study yet.
+
+
+2) What's the main question being asked or hypothesis being tested in this study?
+
+Can learning negative information about beef (its health, environmental, and animal-welfare consequences) shift people's implicit evaluations of beef, as measured by the Affect Misattribution Procedure (AMP)? Following Cone & Ferguson (2015) and Cone et al. (2019), participants complete an AMP and explicit evaluations of beef, then a learning task in which they judge 30 statements about beef as accurate or inaccurate and receive feedback (all feedback points to beef's downsides), then complete the AMP and explicit evaluations again.
+
+1) H1 (implicit): Implicit evaluations of beef will become more negative from Time 1 to Time 2. Specifically, the proportion of "more pleasant" AMP responses following beef primes will decrease from Time 1 to Time 2 relative to the change following control primes (chicken and dessert), that is, a prime type (beef vs. control) x time interaction. We will examine this both combining chicken and dessert and separately for each (as negative information about beef may generalize to chicken).
+2) H2 (explicit): Explicit evaluations of beef (composite of liking, good-bad, and positive-negative) will become more negative from Time 1 to Time 2, and this decrease will be larger than any change in explicit evaluations of chicken and desserts.
+
+
+3) Describe the key dependent variable(s) specifying how they will be measured.
+
+Implicit evaluation (AMP): Each AMP has 60 trials (20 beef, 20 chicken, 20 dessert primes; 5 images per category, each shown 4 times, in random order). Each trial: fixation (500 ms), food prime (100 ms), blank (100 ms), an abstract painting (100 ms), then a black-and-white pattern mask until response. Participants judge whether the painting is less (D key) or more (K key) visually pleasant than average and are told to ignore the first image. Each painting is used only once per participant, across both AMPs. The DV is the proportion of "more pleasant" responses for each prime category at each time point. Practice trials are not analyzed.
+
+Explicit evaluation: Items are rated on 7-point scales at Time 1 and Time 2:
+1) Beef composite: "Overall, how much do you like or dislike beef?" (Dislike very much to Like very much), "Overall, do you think beef is good or bad?" (Very bad to Very good), and "Overall, how positively or negatively do you feel towards beef?" (Very negative to Very positive). These are averaged into a composite.
+2) Comparison composites: the same three items for chicken and for desserts.
+
+
+4) How many and which conditions will participants be assigned to?
+
+This is a fully within-subjects design: time (Time 1 = before learning, Time 2 = after learning) x prime category (beef, chicken, dessert).
+
+
+5) Specify exactly which analyses you will conduct to examine the main question/hypothesis.
+
+H1: A mixed-effects logistic regression on trial-level AMP responses (1 = more pleasant, 0 = less pleasant), with time (Time 1 = 0, Time 2 = 1), prime category, and their interaction as fixed effects, and random intercepts for participants. We will then probe simple effects. We will run this analysis both combining chicken and dessert into a single control category and separately for each control.
+
+H2: A paired t-test comparing the beef explicit composite at Time 1 vs. Time 2. Additionally, a mixed model with food (beef, control) x time on the explicit composites, testing whether the Time 1 to Time 2 change for beef is larger than for the controls (with the same approach as H1).
+
+
+6) Describe exactly how outliers will be defined and handled, and your precise rule(s) for excluding observations.
+
+Participants will be excluded if they press only a single key on all trials of either AMP or on all learning trials. The task also records the measured on-screen duration of each prime, blank, and target. We will exclude trials whose prime or target was displayed for less than 80 ms or more than 125 ms, and we will exclude any participant with more than 20% of trials excluded for this reason.
+
+
+7) How many observations will be collected or what will determine sample size?
+
+Participants are undergraduates in the Questrom Behavioral Lab (URO pool), run in in-person lab sessions. We will collect data for 2 weeks (roughly 250-300 participants expected).
+
+
+8) Anything else you would like to pre-register?
+
+We will also measure the following exploratory items:
+1) Beliefs about beef (health, environment, ethics, taste)
+2) Ambivalence towards beef (3-item composite)
+3) Planned change in beef consumption, which we will predict from changes in the AMP and explicit evaluations
+
+
+9) Type of study
+
+Experiment (within-subjects).
