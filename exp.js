@@ -157,6 +157,49 @@ var preload = {
   images: [...practice_trials, ...amp1_trials, ...amp2_trials].map(t => t.target_file)
     .concat(Object.values(prime_images).flat(), practice_images, ['./img/fixation.png', './img/ampmask.jpg']),
 };
+/* ---------- consent (BU IRB text; formatting lightly edited) ---------- */
+
+var consent = {
+  type: jsPsychHtmlButtonResponse,
+  stimulus: `<div class="consent">
+    <h2>Consent to Participate in Research</h2>
+
+    <h3>Introduction</h3>
+    <p>The purpose of this form is to provide you with important information about participation in this
+    research study. You may print a copy of this form now, if you would like one for your records.</p>
+    <p>The aim of this research is to understand the psychological processes involved in human judgment and
+    decision-making. This research is funded by the Questrom School of Business at Boston University. The
+    person in charge of this study is Dr. Paul Stillman, Assistant Professor of Marketing. Dr. Stillman can be
+    reached at 595 Commonwealth Ave, Room 601, Boston, MA 02215, or by email at pstill@bu.edu. We will refer
+    to this person as the &ldquo;researcher&rdquo; throughout this form.</p>
+    <p>We are asking you to participate in this study because you are over 18 years of age, fluent in English,
+    and can use a computer.</p>
+    <p>This research is expected to take about 15 minutes to complete.</p>
+
+    <h3>What will happen if I take part in this research study?</h3>
+    <p>If you agree to take part in this study, we may ask you to do the following procedures (online). You may
+    complete tasks on the computer related to human judgment and decision-making. You may make some financial
+    decisions about bonus money that we give to you in the experiment. We may expose you to pictures, sounds,
+    videos, or ask you to imagine/recall experiences. You will not be exposed to stimuli that are more
+    disturbing (e.g., anger/sadness/disgust/fear-inducing) than what you might see in an R-rated movie or on
+    YouTube. We may ask you about your demographic information, health, or mood.</p>
+
+    <h3>Will I get paid for taking part in this research study?</h3>
+    <p>You will earn study credit for participating in the URO pool.</p>
+
+    <h3>If I have any questions or concerns about this research study, whom can I talk to?</h3>
+    <p>You can call between 9am and 5pm ET with any concerns or questions. Please contact Dr. Paul Stillman,
+    who can be reached via pstill@bu.edu. He can provide you with a copy of this document. If you have
+    questions about your rights as a research subject or want to speak with someone independent of the
+    research team, you may contact the Boston University IRB directly at 617.358.6115.</p>
+
+    <p class="consent_prompt">If you agree to participate, please click the &ldquo;Next Page&rdquo; button below to proceed.</p>
+  </div>`,
+  choices: ['Next Page'],
+  data: { trial_part: 'consent' },
+};
+timeline.push(consent);
+
 timeline.push(preload);
 
 /* ---------- instructions (adapted from Kurdi et al., 2023, Exp. 1) ---------- */

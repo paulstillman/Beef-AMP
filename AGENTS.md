@@ -22,7 +22,13 @@ There is no build step, package manager, or test suite. Everything is plain HTML
   - **Simulated main-thread freezes** (random 150–300 ms blocks): no version can keep screens exact while the browser is frozen. The old version's screens stretched (prime up to about 390 ms) without any record. In the new version no screen ever ended early (minimum about 93 ms, i.e., 100 ms less half a frame), and stretched screens are recorded in `prime_ms` etc.
   - A first version of the plugin used rAF's frame timestamp and could cut a screen to one frame after a freeze. It now uses `performance.now()`. Don't switch back.
   - The exact "prime skipped" symptom wasn't reproduced locally (it needs real DataPipe streaming); with streaming off and the single-trial design, the remaining risk is stretching on a busy machine, which the data now records.
-- **Re-test needed:** Paul should run the live site again (saving) and check `prime_ms`/`target_ms` in the CSV.
+- **Display check (2026-10-30):** Paul's laptop still showed "skipped" primes and targets, but the page's own timing was perfect: 51 trials with every prime, blank and target at 96–103 ms. TestUFO's frame-skipping test (https://www.testufo.com/frameskipping) showed the laptop's **display drops frames** (the box pauses, then jumps ahead), and he also has system-wide typing and scrolling lag. So the cause was his laptop's display, not the code. The page can't detect display-level frame drops. **Don't use Paul's laptop for timing tests.**
+- **Before collecting data, check each lab computer** (in the browser participants will use, full screen, plugged in, other apps closed):
+  1. https://www.testufo.com/frameskipping: the highlighted box must move smoothly with no pauses or jumps.
+  2. Run `https://paulstillman.github.io/Beef-AMP/?pid=TEST_labN&nosave` through practice and part of AMP 1, then paste in the console (⌥⌘J):
+     `console.table(jsPsych.data.get().filter({trial_part:'amp'}).values().map(r => ({block: r.amp_block, trial: r.amp_trial, prime: Math.round(r.prime_ms), blank: Math.round(r.blank_ms), target: Math.round(r.target_ms)})))`
+     Prime and blank should be within about ±5 ms of 100. Target is only meaningful when the response came during the mask. A full `?nosave` run also shows a green or red "Timing check" box at the end.
+  3. Note the result per machine (e.g., in this file).
 - **Not yet verified:** a *real* save to Google Drive. Do one full run without `?nosave`, confirm `<pid>.csv` appears in the DataPipe Drive folder, then delete it. Data collection must be switched on for the experiment in the DataPipe dashboard.
 - **Possible stray file:** a local preview briefly loaded the page without `?nosave` on 2026-10-28, so a small `*.partial.json` may be in the Drive folder. It's safe to delete.
 - **Full flow built (2026-10-29)** except consent. Paul is running it himself to time it.
@@ -33,7 +39,7 @@ There is no build step, package manager, or test suite. Everything is plain HTML
 
 Modeled on a basic version of the "Kevin" studies (Cone, Flaharty & Ferguson, 2019, *PNAS*; Cone et al., 2021, *Psych Science*), minus diagnosticity manipulations and longitudinal follow-ups. Goal: see whether implicit attitudes toward beef can be moved.
 
-1. Consent (text from Paul, pending)
+1. Consent (built 2026-10-30: `consent` trial, BU IRB text, first screen before preload)
 2. Beef AMP, Time 1 (built)
 3. Explicit attitudes toward beef, Time 1 (built; see "Explicit attitudes" below)
 4. Learning phase (built 2026-10-29; statements in `learning_statements.md`, drafted from the slide deck `Research/beef_amp/tAMP_design_2024-04-15.pptx`, slides 8–9, then revised with Paul; still to be fact-checked). Participants judge statements about beef as **accurate** or **inaccurate** and get feedback. All feedback points to beef's negative health, environmental and ethical aspects. The Kevin version: 50 trials, C/U keys, feedback "correct" in blue or "incorrect" in red, followed by a one-line summary of the true answer.
@@ -119,6 +125,7 @@ All primes are ≤480 px on the longest side.
    - `amp1_trials`, `amp2_trials`: each is a fresh `main_primes()` (every food prime × `n_reps_per_prime`, shuffled across categories; 60 trials).
    - Targets come from `take_targets(n)`, which pulls from a per-participant shuffled pool of pic1–pic200 (`target_pool`), so no painting repeats across practice, AMP 1 and AMP 2. 75 are left over.
    - Fields: `prime_category` (`beef`/`chicken`/`dessert`/`practice`), `prime_file`, `target_file`, `amp_block` (`practice`/`amp1`/`amp2`), `amp_trial` (1–n within block).
+4b. `consent` (jsPsychHtmlButtonResponse, the first screen): BU IRB consent text (formatting lightly edited; styles `.consent*` in `amp.css`; "about 15 minutes"). One "Next Page" button. There's no decline option: anyone who doesn't want to participate tells the RA, which is explained verbally, not on screen (Paul, 2026-10-30). The row has `trial_part: 'consent'`.
 5. `preload`: all targets in use, all primes (including practice), fixation, mask.
 6. `instructions` (jsPsychInstructions, Next/Previous buttons): two pages adapted nearly verbatim from Kurdi et al. Exp. 1, with E/I swapped for D/K and the influence-awareness page dropped. Then `practice_intro` (Kurdi's practice intro, space to start) → practice block → `test_ready` ("Good! The test phase will now begin. Keep going as before." + D/K reminder + "Ready? Press the space bar to begin."). All are tagged `trial_part: 'instructions'`. The timeline order is pushed in one line after `make_amp_block()` is defined.
 7. `make_amp_block(trials)`: one `amp_trial` (custom plugin `jsPsychAmpTrial` in `amp_trial_plugin.js`) per row of `trials` (already in random order). Used for practice, AMP 1 and AMP 2.
@@ -186,7 +193,7 @@ Participants run in the lab's Qualtrics **session router** (Paul's `qualtrics-ro
 Updated 2026-10-29. Confirm with Paul before "fixing" design choices.
 
 - **Learning statements not fact-checked yet**: see the "verify" notes in `learning_statements.md`.
-- **No consent or debrief.** AMP instructions are in (see flow step 6).
+- **No debrief yet.** Consent is in (flow step 4b).
 - **Prime repeats aren't spread out.** The 60 trials are fully shuffled, so the same image can appear on back-to-back trials. Kurdi instead cycled through the prime set without replacement. Revisit if that matters.
 - **Key-side counterbalancing** is not implemented (D is always "Less Pleasant"). Kurdi didn't counterbalance either.
 - **Unused files:** `targets.js` (still loaded by `index.html`), `exp_old_working.js`, the commented-out canvas demo in `index.html`, and most of `amp.css`.

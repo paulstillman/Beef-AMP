@@ -621,14 +621,17 @@ input[type="radio"]:checked + .label:after {
 }
 
 /* explicit-attitude scales: undo the global `input` size rule above */
-.jspsych-survey-likert-opts input[type="radio"] {
+ul.jspsych-survey-likert-opts li input[type="radio"] {
     width: 20px;
     height: 20px;
+    margin-left: -10px; /* jspsych.css centers with -6px, which assumes the default 13px radio */
 }
 
-.jspsych-survey-likert-statement {
+.jspsych-survey-likert-statement,
+.jspsych-survey-multi-select-text {
     font-family: 'Open Sans', 'Arial', sans-serif;
     font-size: 20px;
+    font-weight: bold;
 }
 
 
@@ -700,3 +703,19 @@ input[type="radio"]:checked + .label:after {
     width: 480px;
     height: 480px;
 }
+
+
+/* consent form */
+.consent {
+    max-width: 800px;
+    margin: 30px auto;
+    text-align: left;
+    font-family: 'Open Sans', 'Arial', sans-serif;
+    font-size: 16px;
+    line-height: 1.5;
+}
+
+.consent h2 { text-align: center; }
+.consent h3 { font-size: 18px; font-weight: bold; margin: 24px 0 6px; }
+.consent p { font-family: inherit; user-select: text; -webkit-user-select: text; }
+.consent_prompt { font-weight: bold; text-align: center; margin-top: 30px; }
