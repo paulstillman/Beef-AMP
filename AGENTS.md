@@ -122,7 +122,7 @@ All primes are ≤480 px on the longest side.
 ## Current experiment flow (`exp.js`)
 
 1. `initJsPsych` registers the DataPipe extension (see "Data saving" below). `on_finish` shows the raw data only when `?nosave` is in the URL. Otherwise participants see the extension's "Saving data…" then "Done. You may close this page." messages.
-2. `pid` comes from the URL (sent by the lab router). If it's missing, it's self-generated as `SG_` + 12 random characters. Every row gets `pid`, `pid_source` (`url`/`self_generated`) and `survey_id` (`SV_BeefAMP`). The data file is `${pid}.csv`.
+2. Every row also gets `new_instructions = 1` (sessions with the revised diagram instructions, comprehension check and 10 practice trials, from 2026-10-30; earlier files lack the column). `pid` comes from the URL (sent by the lab router). If it's missing, it's self-generated as `SG_` + 12 random characters. Every row gets `pid`, `pid_source` (`url`/`self_generated`) and `survey_id` (`SV_BeefAMP`). The data file is `${pid}.csv`.
 3. Settings: `timing` (Kurdi values: fixation 500 ms (`first_fixation` 1000 ms on trial 1 of each block), prime 100 ms, blank 100 ms, target 100 ms, mask until response), `n_reps_per_prime = 4`, `prime_images` (category → file list).
 4. Trial lists, built before the timeline by `make_amp_trials(block_name, primes)`:
    - `practice_trials`: **10** trials, each of the 5 `practice_images` (plates/silverware, `prime_category: 'practice'`) twice, in random order. **Before AMP 1 only.**
@@ -132,7 +132,7 @@ All primes are ≤480 px on the longest side.
 4b. `consent` (jsPsychHtmlButtonResponse, right after the preload): BU IRB consent text (formatting lightly edited; styles `.consent*` in `amp.css`; "about 15 minutes"). One "Next Page" button. There's no decline option: anyone who doesn't want to participate tells the RA, which is explained verbally, not on screen (Paul, 2026-10-30). The row has `trial_part: 'consent'`.
 5. `preload`: all targets in use, all primes (including practice), fixation, mask.
 6. `instructions_loop` (revised 2026-10-30, because some participants misunderstood the task):
-   - `instructions` (2 pages): page 1 is a diagram (fixation → practice plate photo labeled "IGNORE this" → example painting `pic1` labeled "JUDGE this" → static with the D/K keys), then "The first image is just a distractor, so ignore it…". Page 2 covers the keys, that the images go by very fast (pay close attention, gut reaction), and the bias warning. Bold for key words. Styles: `.instr_*` in `amp.css`.
+   - `instructions` (3 pages): page 0 introduces the task ("you will be judging abstract paintings", shown with the example painting: more or less pleasant than average, gut reaction). Page 1 is a diagram (fixation → practice plate photo labeled "IGNORE this" → example painting `pic1` labeled "JUDGE this" → static with the D/K keys), then "The first image is just a distractor, so ignore it…". Page 2 covers the keys, that the images go by very fast (pay close attention, gut reaction), and the bias warning. Bold for key words. Styles: `.instr_*` in `amp.css`.
    - `comprehension` (jsPsychSurveyMultiChoice): "what are you judging?" (correct: the abstract painting) and "which key for more pleasant?" (correct: K). If either is wrong, `comprehension_retry` ("Not quite…") loops back to the instructions until both are correct. Rows: `trial_part: 'comprehension'`, `comp_attempt`, `comp_correct`.
    - Then `practice_intro` → practice block → `test_ready`. "Warning signal" wording was replaced with "just a distractor" everywhere (including the AMP 2 reminder).
 7. `make_amp_block(trials)`: one `amp_trial` (custom plugin `jsPsychAmpTrial` in `amp_trial_plugin.js`) per row of `trials` (already in random order). Used for practice, AMP 1 and AMP 2.
@@ -141,7 +141,7 @@ All primes are ≤480 px on the longest side.
    - If the tab is hidden, animation frames pause, so the trial pauses too (and the measured durations show it).
 8. `make_explicit('t1')`: beef page, then chicken/desserts page (see "Explicit attitudes" below).
 9. Learning phase: `learning_intro`, then 30 × [`learning_statement`, `learning_feedback`] (see "Learning phase" below).
-10. `amp2_intro` (reminder of the AMP instructions, space to start), AMP 2 block, then `make_explicit('t2')`.
+10. `amp2_intro`: "You will now complete the same task again. To remind you, this is what each trial will look like:" plus the same diagram (`instr_diagram`), the distractor reminder, and space to start. No practice or comprehension check. Then the AMP 2 block, then `make_explicit('t2')`.
 11. `end_questions` (`beef_plan`, `eat_freq`, `hunger`), then `beef_restriction` (multi-select). End of study, asked once.
 12. No save trial: the extension submits the full CSV automatically when the timeline ends.
 

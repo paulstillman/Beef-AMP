@@ -56,7 +56,8 @@ const pid_source = pid ? 'url' : 'self_generated';
 if (!pid) {
   pid = `SG_${jsPsych.randomization.randomID(12)}`;
 }
-jsPsych.data.addProperties({ pid: pid, pid_source: pid_source, survey_id: SURVEY_ID });
+// new_instructions = 1: diagram instructions + comprehension check + 10 practice trials (2026-10-30)
+jsPsych.data.addProperties({ pid: pid, pid_source: pid_source, survey_id: SURVEY_ID, new_instructions: 1 });
 
 
 let timeline = [];
@@ -230,9 +231,15 @@ timeline.push(preload, consent);
 
 /* ---------- instructions (adapted from Kurdi et al., 2023, Exp. 1; diagram added 2026-10-30) ---------- */
 
-var instr_page1 = `<div class='instructions instr_wide'>
-<p>In this task, you will see <b>two images</b> flash on the screen <b>very quickly</b>, one right after the other.</p>
-<div class="instr_seq">
+var instr_page0 = `<div class='instructions'>
+<p>In this part of the study, you will be judging <b>abstract paintings</b>, like this one:</p>
+<img src="./img/targets_resized/pic${example_painting}.png" class="instr_example">
+<p>For each painting, your job is to decide whether it is <b>more</b> or <b>less</b> visually pleasant
+than <b>average</b>. There are no right or wrong answers. We are interested in your <b>gut reaction</b>.</p>
+<p>On the next page, we will show you exactly what each trial looks like.</p>
+</div>`;
+
+const instr_diagram = `<div class="instr_seq">
   <div class="instr_panel"><div class="instr_box"><img src="./img/fixation.png" style="max-width:60px"></div>
     <div class="instr_lab">Get ready<br><span class="instr_time">(half a second)</span></div></div>
   <div class="instr_arrow">&rarr;</div>
@@ -244,7 +251,11 @@ var instr_page1 = `<div class='instructions instr_wide'>
   <div class="instr_arrow">&rarr;</div>
   <div class="instr_panel"><div class="instr_box"><img src="./img/ampmask.jpg" style="width:186px;height:186px"></div>
     <div class="instr_lab">Static<br>press your key now:<br><b>D</b> = less pleasant<br><b>K</b> = more pleasant</div></div>
-</div>
+</div>`;
+
+var instr_page1 = `<div class='instructions instr_wide'>
+<p>In this task, you will see <b>two images</b> flash on the screen <b>very quickly</b>, one right after the other.</p>
+${instr_diagram}
 <p>The first image is <b>just a distractor</b>, so <b>ignore it</b>. Your job is to judge <b>only the abstract painting</b>.</p>
 </div>`;
 
@@ -260,7 +271,7 @@ for a split second. Go with your <b>gut reaction</b> to it.</p>
 
 var instructions = {
   type: jsPsychInstructions,
-  pages: [instr_page1, instr_page2],
+  pages: [instr_page0, instr_page1, instr_page2],
   show_clickable_nav: true,
   data: { trial_part: 'instructions' },
 };
@@ -574,15 +585,11 @@ timeline.push(learning_intro, {
 // no practice the second time; brief reminder of the AMP instructions
 var amp2_intro = {
   type: jsPsychHtmlKeyboardResponse,
-  stimulus: `<div class='instructions'>
-    <p>You will now do the picture task from earlier one more time.</p>
-    <p>As before, you will see a real-life image followed by an abstract painting.
-    The first image is <b>just a distractor</b>, so <b>ignore it</b>.
-    Your task is to judge <b>only the abstract painting</b>: is it more or less visually pleasant than average?</p>
-    <p>If the abstract painting is less visually pleasant than average, press the <b>D</b> key.
-    If it is more visually pleasant than average, press the <b>K</b> key.</p>
-    <p>Please try your absolute best not to let the real-life images bias your judgment of the abstract paintings.</p>
-    <p>Ready? Press the space bar to begin.</p>
+  stimulus: `<div class='instructions instr_wide'>
+    <p>You will now complete the <b>same task</b> again. To remind you, this is what each trial will look like:</p>
+    ${instr_diagram}
+    <p>The first image is <b>just a distractor</b>, so <b>ignore it</b>. Judge <b>only the abstract painting</b>.</p>
+    <p>Ready? Press the <b>space bar</b> to begin.</p>
   </div>`,
   choices: [' '],
   data: { trial_part: 'instructions' },

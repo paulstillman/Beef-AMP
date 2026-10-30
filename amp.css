@@ -752,3 +752,5 @@ ul.jspsych-survey-likert-opts li input[type="radio"] {
 /* instruction text uses the .instructions font (Open Sans/Arial), not the global
    Roboto `p` rule above, so <b> renders bold everywhere */
 .instructions p { font-family: inherit; }
+
+.instr_example { display: block; margin: 20px auto; width: 260px; height: 260px; border: 2px solid #ccc; }
