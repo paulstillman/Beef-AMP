@@ -32,7 +32,13 @@ There is no build step, package manager, or test suite. Everything is plain HTML
 - **Not yet verified:** a *real* save to Google Drive. Do one full run without `?nosave`, confirm `<pid>.csv` appears in the DataPipe Drive folder, then delete it. Data collection must be switched on for the experiment in the DataPipe dashboard.
 - **Possible stray file:** a local preview briefly loaded the page without `?nosave` on 2026-10-28, so a small `*.partial.json` may be in the Drive folder. It's safe to delete.
 - **Full flow built (2026-10-29)** except consent. Paul is running it himself to time it.
-- **Preload is strict:** if any image fails to download, jsPsych shows "The experiment failed to load." and the participant can't continue. This is unlikely on GitHub Pages. Decide whether to allow continuing (`continue_after_error`), at the risk of a missing image.
+- **Preload auto-retry (2026-10-30):** two lab participants hit "The experiment failed to load" (a refresh fixed it). Now:
+  - the preload runs **before consent**, with `continue_after_error: true`;
+  - on failure it pauses jsPsych and reloads the page (same URL, so `pid` is kept), up to 2 times, tracked in `sessionStorage` (`beef_amp_load_retries`);
+  - after that it shows "The study could not load. Please let the research assistant know." and stops **without saving** (a saved file would block the participant's real file under the same name);
+  - on success, the preload row records `load_retries`.
+
+  Tested in headless Chrome by blocking `fixation.png`.
 - **Next likely tasks:** fact-check learning statements, consent text, debrief, and the pre-AMP messages/manipulation.
 
 ## Overall study flow (Paul, 2026-10-29)
@@ -123,7 +129,7 @@ All primes are ≤480 px on the longest side.
    - `amp1_trials`, `amp2_trials`: each is a fresh `main_primes()` (every food prime × `n_reps_per_prime`, shuffled across categories; 60 trials).
    - Targets come from `take_targets(n)`, which pulls from a per-participant shuffled pool of pic1–pic200 (`target_pool`), so no painting repeats across practice, AMP 1 and AMP 2. 75 are left over.
    - Fields: `prime_category` (`beef`/`chicken`/`dessert`/`practice`), `prime_file`, `target_file`, `amp_block` (`practice`/`amp1`/`amp2`), `amp_trial` (1–n within block).
-4b. `consent` (jsPsychHtmlButtonResponse, the first screen): BU IRB consent text (formatting lightly edited; styles `.consent*` in `amp.css`; "about 15 minutes"). One "Next Page" button. There's no decline option: anyone who doesn't want to participate tells the RA, which is explained verbally, not on screen (Paul, 2026-10-30). The row has `trial_part: 'consent'`.
+4b. `consent` (jsPsychHtmlButtonResponse, right after the preload): BU IRB consent text (formatting lightly edited; styles `.consent*` in `amp.css`; "about 15 minutes"). One "Next Page" button. There's no decline option: anyone who doesn't want to participate tells the RA, which is explained verbally, not on screen (Paul, 2026-10-30). The row has `trial_part: 'consent'`.
 5. `preload`: all targets in use, all primes (including practice), fixation, mask.
 6. `instructions` (jsPsychInstructions, Next/Previous buttons): two pages adapted nearly verbatim from Kurdi et al. Exp. 1, with E/I swapped for D/K and the influence-awareness page dropped. Then `practice_intro` (Kurdi's practice intro, space to start) → practice block → `test_ready` ("Good! The test phase will now begin. Keep going as before." + D/K reminder + "Ready? Press the space bar to begin."). All are tagged `trial_part: 'instructions'`. The timeline order is pushed in one line after `make_amp_block()` is defined.
 7. `make_amp_block(trials)`: one `amp_trial` (custom plugin `jsPsychAmpTrial` in `amp_trial_plugin.js`) per row of `trials` (already in random order). Used for practice, AMP 1 and AMP 2.

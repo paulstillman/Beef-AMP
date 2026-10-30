@@ -152,10 +152,35 @@ const amp2_trials = make_amp_trials('amp2', main_primes());
 
 /* ---------- trials ---------- */
 
+// If any image fails to load (usually a network hiccup), reload the page automatically
+// (same URL, so the router's pid is kept), up to MAX_LOAD_RETRIES times. Nothing has been
+// saved yet, so a reload creates no duplicate files. After that, ask for the RA and stop,
+// without saving (a saved file would block the participant's real file under the same name).
+const MAX_LOAD_RETRIES = 2;
+const RETRY_KEY = 'beef_amp_load_retries';
 var preload = {
   type: jsPsychPreload,
   images: [...practice_trials, ...amp1_trials, ...amp2_trials].map(t => t.target_file)
     .concat(Object.values(prime_images).flat(), practice_images, ['./img/fixation.png', './img/ampmask.jpg']),
+  continue_after_error: true,
+  on_finish: function (data) {
+    let retries = 0;
+    try { retries = Number(sessionStorage.getItem(RETRY_KEY)) || 0; } catch (e) {}
+    if (data.success) {
+      data.load_retries = retries;
+      try { sessionStorage.removeItem(RETRY_KEY); } catch (e) {}
+      return;
+    }
+    jsPsych.pauseExperiment();
+    if (retries < MAX_LOAD_RETRIES) {
+      try { sessionStorage.setItem(RETRY_KEY, retries + 1); } catch (e) {}
+      jsPsych.getDisplayElement().innerHTML = '<p class="consent_prompt">Loading&hellip;</p>';
+      location.reload();
+    } else {
+      jsPsych.getDisplayElement().innerHTML =
+        '<p class="consent_prompt">The study could not load. Please let the research assistant know.</p>';
+    }
+  },
 };
 /* ---------- consent (BU IRB text; formatting lightly edited) ---------- */
 
@@ -198,9 +223,7 @@ var consent = {
   choices: ['Next Page'],
   data: { trial_part: 'consent' },
 };
-timeline.push(consent);
-
-timeline.push(preload);
+timeline.push(preload, consent);
 
 /* ---------- instructions (adapted from Kurdi et al., 2023, Exp. 1) ---------- */
 
