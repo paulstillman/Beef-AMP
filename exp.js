@@ -31,6 +31,17 @@ const jsPsych = initJsPsych({
     const redirect = `${ROUTER_URL}?from=${SURVEY_ID}&pid=${encodeURIComponent(pid)}`;
     if (NOSAVE) {
       jsPsych.data.displayData();
+      // timing check for testing machines: share of AMP trials with a screen off by > 25 ms
+      const amp = jsPsych.data.get().filter({ trial_part: 'amp' }).values();
+      const off = (v, want) => v !== null && Math.abs(v - want) > 25;
+      const bad = amp.filter(r => off(r.prime_ms, timing.prime) || off(r.blank_ms, timing.blank) ||
+        off(r.target_ms, timing.target) && r.responded_during === 'mask');
+      const worst = amp.length ? Math.round(Math.max(...amp.map(r => Math.max(r.prime_ms, r.blank_ms)))) : 0;
+      jsPsych.getDisplayElement().insertAdjacentHTML('afterbegin',
+        `<div style="font:18px sans-serif;padding:12px;margin:12px;border:2px solid ${bad.length ? 'red' : 'green'}">
+          Timing check: ${bad.length} of ${amp.length} AMP trials had a prime, blank or target off by more than 25 ms
+          (longest prime/blank: ${worst} ms; frame interval about ${amp.length ? amp[0].frame_ms.toFixed(1) : '?'} ms).
+         </div>`);
       console.log('would redirect to:', redirect);
     } else {
       window.location.href = redirect;
