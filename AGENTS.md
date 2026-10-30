@@ -19,7 +19,8 @@ There is no build step, package manager, or test suite. Everything is plain HTML
 - **Kurdi timings switched on (2026-10-29):** fixation 500 → prime 100 → blank 100 → target 100 → mask until response. A full 60-trial local `?nosave` run measured fixation ~509 ms and prime/blank/target ~105 ms each (the extra ~5 ms is jsPsych overhead). Not yet checked on the live site.
 - **Not yet verified:** a *real* save to Google Drive. Do one full run without `?nosave`, confirm `<pid>.csv` appears in the DataPipe Drive folder, then delete it. Data collection must be switched on for the experiment in the DataPipe dashboard.
 - **Possible stray file:** a local preview briefly loaded the page without `?nosave` on 2026-10-28, so a small `*.partial.json` may be in the Drive folder. It's safe to delete.
-- **Next likely tasks:** learning phase (waiting on Paul's fact document), AMP 2 + explicit Time 2 (with a `phase`/time column on explicit rows), consent text, debrief, and the pre-AMP messages/manipulation.
+- **Full flow built (2026-10-29)** except consent. Paul is running it himself to time it.
+- **Next likely tasks:** fact-check learning statements, consent text, debrief, and the pre-AMP messages/manipulation.
 
 ## Overall study flow (Paul, 2026-10-29)
 
@@ -28,9 +29,9 @@ Modeled on a basic version of the "Kevin" studies (Cone, Flaharty & Ferguson, 20
 1. Consent (text from Paul, pending)
 2. Beef AMP, Time 1 (built)
 3. Explicit attitudes toward beef, Time 1 (built; see "Explicit attitudes" below)
-4. Learning phase (pending; Paul will provide a document of facts to draw from). Participants judge statements about beef as **accurate** or **inaccurate** and get feedback. All feedback points to beef's negative health, environmental and ethical aspects. The Kevin version: 50 trials, C/U keys, feedback "correct" in blue or "incorrect" in red, followed by a one-line summary of the true answer.
-5. Beef AMP, Time 2 (pending; needs a second AMP block with **new** targets: 5 practice + 60 + 60 = 125 of 200)
-6. Explicit attitudes, Time 2 (pending; same items)
+4. Learning phase (built 2026-10-29; statements in `learning_statements.md`, drafted from the slide deck `Research/beef_amp/tAMP_design_2024-04-15.pptx`, slides 8–9, then revised with Paul; still to be fact-checked). Participants judge statements about beef as **accurate** or **inaccurate** and get feedback. All feedback points to beef's negative health, environmental and ethical aspects. The Kevin version: 50 trials, C/U keys, feedback "correct" in blue or "incorrect" in red, followed by a one-line summary of the true answer.
+5. Beef AMP, Time 2 (built 2026-10-29; brief reminder screen, no practice, 60 new targets: 5 + 60 + 60 = 125 of 200 used)
+6. Explicit attitudes, Time 2 (built; same items, `explicit_time: 't2'`)
 
 In the Kevin studies the AMP had 60 trials (30 Kevin, 30 neutral-stranger primes) and used D = less pleasant, K = more pleasant. The PDFs are in Dropbox at `Research/beef_amp/cone-et-al-2019-...pdf` and `cone-et-al-2021-...pdf`.
 
@@ -79,7 +80,10 @@ Source PDFs are outside the repo, in Paul's Dropbox at `Research/beef_amp/kurdi_
 | `exp.js` | **The experiment.** Settings block at the top (`timing`, `n_reps_per_prime`, `prime_images`), then builds the trial list and timeline and calls `jsPsych.run`. This is the file to edit. |
 | `exp_old_working.js` | Older snapshot of `exp.js` (prime 1000 ms, older `container_amp` layout). Reference only; not loaded. |
 | `amp.css` | Styles. Mostly inherited boilerplate from an earlier mouse-tracking project (questionnaire, radio buttons, `mt-response-btn`, etc.). The AMP actually uses `.container_amp_v2`, `.image_amp_v2`, `.text_left_v2`, `.text_right_v2`. The `v1` classes (`.container_amp`, `.text_left`, ...) are used only by `exp_old_working.js`. |
-| `targets.js` | Defines `all_targets` (pic1–pic200) pointing at `./img/targets/`, a folder that **no longer exists**. Loaded by `index.html` but **not used** by `exp.js`. Likely removable. |
+| `learning_items.js` | **Generated** by `build_learning.py` from `learning_statements.md` (defines `learning_items`). Loaded by `index.html`. Don't edit by hand. |
+| `build_learning.py` | Parses `learning_statements.md` (`**E1.** statement`, `- Answer:`, `- Feedback source:`) into `learning_items.js`. **Rerun after every edit to the statements:** `python3 build_learning.py`. It prints counts per domain × accurate (should be 5 each). |
+| `targets.js` | Old, unused (points at the deleted `img/targets/`). No longer loaded by `index.html`; safe to delete. |
+| `learning_statements.md` | **Source of truth for the learning-phase statements** (30 drafts: environment/health/animal welfare × 5 accurate downsides + 5 inaccurate upside claims, each with answer, feedback line and source). Draft as of 2026-10-29; Paul/Melissa/Arin to edit and fact-check before it's built. Also lists problems with facts in the 2024 slide deck. |
 | `explicit_questions.md` | **Source of truth for the explicit-attitude items** (wording, 1–7/1–9 scale, anchors, composite vs separate, page layout). Paul edits it; then update `exp.js` to match. |
 | `resize_targets.py` | One-off PIL script that resized `img/targets/*` → `img/targets_resized/*` at 480×480. Uses `Image.ANTIALIAS` (removed in Pillow ≥10; use `Image.LANCZOS` if rerun). |
 | `img/fixation.png` | Fixation image shown before each prime. |
@@ -105,30 +109,32 @@ All primes are ≤480 px on the longest side.
 3. Settings: `timing` (Kurdi values: fixation 500 ms, prime 100 ms, blank 100 ms, target 100 ms, mask until response), `n_reps_per_prime = 4`, `prime_images` (category → file list).
 4. Trial lists, built before the timeline by `make_amp_trials(block_name, primes)`:
    - `practice_trials`: the 5 `practice_images` (plates/silverware, `prime_category: 'practice'`), each once, in random order. **Before AMP 1 only.**
-   - `amp1_trials`: `main_primes()`, i.e. every food prime × `n_reps_per_prime`, shuffled across categories (60 trials).
-   - Targets come from `take_targets(n)`, which pulls from a per-participant shuffled pool of pic1–pic200 (`target_pool`), so no painting repeats across practice, AMP 1 and (later) AMP 2. 135 are left after practice + AMP 1.
-   - Fields: `prime_category` (`beef`/`chicken`/`dessert`/`practice`), `prime_file`, `target_file`, `amp_block` (`practice`/`amp1`), `amp_trial` (1–n within block).
+   - `amp1_trials`, `amp2_trials`: each is a fresh `main_primes()` (every food prime × `n_reps_per_prime`, shuffled across categories; 60 trials).
+   - Targets come from `take_targets(n)`, which pulls from a per-participant shuffled pool of pic1–pic200 (`target_pool`), so no painting repeats across practice, AMP 1 and AMP 2. 75 are left over.
+   - Fields: `prime_category` (`beef`/`chicken`/`dessert`/`practice`), `prime_file`, `target_file`, `amp_block` (`practice`/`amp1`/`amp2`), `amp_trial` (1–n within block).
 5. `preload`: all targets in use, all primes (including practice), fixation, mask.
 6. `instructions` (jsPsychInstructions, Next/Previous buttons): two pages adapted nearly verbatim from Kurdi et al. Exp. 1, with E/I swapped for D/K and the influence-awareness page dropped. Then `practice_intro` (Kurdi's practice intro, space to start) → practice block → `test_ready` ("Good! The test phase will now begin. Keep going as before." + D/K reminder + "Ready? Press the space bar to begin."). All are tagged `trial_part: 'instructions'`. The timeline order is pushed in one line after `make_amp_block()` is defined.
-7. `make_amp_block(trials)`: `[fixation, prime_screen, blank_screen, target_screen, mask_if_needed]` run over `timeline_variables: trials` (already in random order). Used for practice and AMP 1. Use it again for AMP 2 with `make_amp_trials('amp2', main_primes())` (add those to `preload` too).
+7. `make_amp_block(trials)`: `[fixation, prime_screen, blank_screen, target_screen, mask_if_needed]` run over `timeline_variables: trials` (already in random order). Used for practice, AMP 1 and AMP 2.
    - Every screen uses `amp_screen(img)`: the image centered, with D / "Less Pleasant" bottom-left and K / "More Pleasant" bottom-right. The blank screen is `amp_screen(null)`, which keeps the key labels but shows no image. Keys pressed during fixation, prime or blank are ignored.
    - `target_screen` shows for `timing.target` and accepts `d`/`k`. A press ends the trial and the mask is skipped (`mask_if_needed` is a conditional timeline that runs only if the target row has no response). Otherwise `mask_screen` stays up until `d`/`k`.
    - Whichever row got the response (target or mask) gets `pleasant` (1 = k, 0 = d) and `rt_from_target` (ms from target onset; for mask rows = `timing.target` + mask `rt`).
-8. `explicit_beef`, then `explicit_comparison` (see "Explicit attitudes" below).
-9. `end_questions` (`intend_reduce`, `eat_freq`; end of study, asked once).
-10. No save trial: the extension submits the full CSV automatically when the timeline ends.
+8. `make_explicit('t1')`: beef page, then chicken/desserts page (see "Explicit attitudes" below).
+9. Learning phase: `learning_intro`, then 30 × [`learning_statement`, `learning_feedback`] (see "Learning phase" below).
+10. `amp2_intro` (reminder of the AMP instructions, space to start), AMP 2 block, then `make_explicit('t2')`.
+11. `end_questions` (`intend_reduce`, `eat_freq`; end of study, asked once).
+12. No save trial: the extension submits the full CSV automatically when the timeline ends.
 
 ### Explicit attitudes
 
 Modeled on the Kevin studies' six-item composite: a "likeable" item (1 = very unlikeable to 7 = very likeable) plus five 7-point bipolar items (bad–good, mean–pleasant, disagreeable–agreeable, uncaring–caring, cruel–kind), averaged. Beef version (Claude's proposal, 2026-10-29). Paul is editing it in `explicit_questions.md`, which wins over this description and the code when they disagree. He wants most items on one page, using 1–7 or 1–9 scales depending on wording. Current implementation:
-- Page 1, `explicit_beef` (jsPsychSurveyLikert, `scale_width: 900`): three groups in fixed order, shuffled within each group: attitude (`like` always first, then `good`/`positive`), ambivalence (`certainty`/`conflicted`/`confident`), other (`taste`/`healthy`/`env_friendly`/`ethical`). Defined in `beef_attitude`, `beef_ambivalence`, `beef_other`.
-- Page 2, `explicit_comparison`: `like`/`good`/`positive` for chicken and for desserts (`chicken_like`, `dessert_good`, …, from `comparison_items()`). The two food blocks appear in random order, with items in fixed order within each.
+- `make_explicit(time)` builds both pages; it's called with `'t1'` (after AMP 1) and `'t2'` (after AMP 2). Rows carry `explicit_time` (`t1`/`t2`) and `explicit_page` (`beef`/`comparison`).
+- Page 1, beef (jsPsychSurveyLikert, `scale_width: 900`): three groups in fixed order, shuffled within each group: attitude (`like` always first, then `good`/`positive`), ambivalence (`certainty`/`conflicted`/`confident`), other (`taste`/`healthy`/`env_friendly`/`ethical`). Defined in `beef_attitude`, `beef_ambivalence`, `beef_other`.
+- Page 2, comparison: `like`/`good`/`positive` for chicken and for desserts (`chicken_like`, `dessert_good`, …, from `comparison_items()`). The two food blocks appear in random order, with items in fixed order within each.
 - End of study, `end_questions` is asked **once**, as the last trial before the extension saves: `intend_reduce` ("How likely are you to eat less beef in the next month?", bipolar labels), then `eat_freq` ("How often do you eat beef?", 1 Never … 7 Daily). Its row has `trial_part == 'end_questions'`, with answers (1–7) in columns `intend_reduce` and `eat_freq`. Keep it last when the Time 2 blocks are added.
 - All items are 1–7 for now. Wording and labels are in `explicit_questions.md`.
 - Labels: bipolar items label every point "N<br>phrase" (built by `bipolar_labels(low, high, mid)`). Unipolar "not at all … very" items label only points 1 and 7 (`unipolar_labels(low, high)`).
 - All items are required. Each answer is saved as 1–7 in its own column (`explicit_like`, `explicit_good`, …) on the two rows with `trial_part == 'explicit'`. Each row's `explicit_order` lists that page's item names in display order.
 - `amp.css` has a rule at the bottom that undoes the old global `input { width:200px; height:50px }` for these radio buttons.
-- Not yet tagged with a time point (T1/T2). Add a `phase` column when the second AMP and explicit block are added.
 
 ### Data saving (DataPipe → Google Drive)
 
@@ -138,6 +144,15 @@ Modeled on the Kevin studies' six-item composite: a "likeable" item (1 = very un
 - **`?nosave` URL flag** sets the extension's `enabled: false`: no session, no streaming, no submission. Use it for all testing.
 - The extension and jsPsych 8 go together. The old `@jspsych-contrib/plugin-pipe` save trial is gone, and versions ≥0.5 of that plugin need jsPsych 8 anyway.
 - Docs: https://pipe.jspsych.org/docs (see "What's changed", "Saving as you go").
+
+### Learning phase
+
+- Items come from `learning_items` (generated; see file map): 30 statements, environment/health/animal welfare × 5 accurate (beef downsides) + 5 inaccurate (claimed upsides). Every statement is beef- or red-meat-specific.
+- `learning_trials`: statements shuffled per participant. Each gets a beef photo from `prime_images.beef` (5 images × 6 = 30, shuffled), shown above the statement like Kevin's photo in Cone et al.
+- `learning_statement`: image + statement, keys **A = accurate**, **I = inaccurate**, labels at bottom left/right.
+- `learning_feedback`: same image + statement, then "Correct" (blue) / "Incorrect" (red), "This statement is accurate/inaccurate.", "Source: …". Space to continue (no minimum time).
+- Data (`trial_part` `learning` and `learning_feedback`): `learning_trial` (1–30), `learning_item` (E1…A10), `learning_domain`, `learning_accurate`, `learning_image`. Statement rows also have `response` (a/i), `rt`, `said_accurate`, `learning_correct`. Feedback rows' `rt` is reading time.
+- Styles: `.learning_*` classes at the bottom of `amp.css`.
 
 ### Lab router (Qualtrics)
 
@@ -151,13 +166,13 @@ Participants run in the lab's Qualtrics **session router** (Paul's `qualtrics-ro
 
 ### Data columns added by the AMP
 
-On every fixation/prime/blank/target/mask row (via `amp_data()`): `trial_part` (`fixation`/`prime`/`blank`/`target`/`mask`), `amp_block` (`practice`/`amp1`), `amp_trial`, `prime_category` (`beef`/`chicken`/`dessert`), `prime_file`, `target_file`. The response row (target **or** mask, per above) also has `response`, `rt` (from that screen's onset), `pleasant`, `rt_from_target`. For analysis, keep rows where `pleasant` is not missing **and `amp_block != "practice"`**. That gives exactly one row per AMP trial; use `trial_part` to see whether the response came during the target or the mask.
+On every fixation/prime/blank/target/mask row (via `amp_data()`): `trial_part` (`fixation`/`prime`/`blank`/`target`/`mask`), `amp_block` (`practice`/`amp1`/`amp2`), `amp_trial`, `prime_category` (`beef`/`chicken`/`dessert`), `prime_file`, `target_file`. The response row (target **or** mask, per above) also has `response`, `rt` (from that screen's onset), `pleasant`, `rt_from_target`. For analysis, keep rows where `pleasant` is not missing **and `amp_block != "practice"`**. That gives exactly one row per AMP trial; use `trial_part` to see whether the response came during the target or the mask.
 
 ## Known issues / unfinished work
 
 Updated 2026-10-29. Confirm with Paul before "fixing" design choices.
 
-- **Learning phase, second AMP and second explicit block** not built yet (see "Overall study flow").
+- **Learning statements not fact-checked yet**: see the "verify" notes in `learning_statements.md`.
 - **No consent or debrief.** AMP instructions are in (see flow step 6).
 - **Prime repeats aren't spread out.** The 60 trials are fully shuffled, so the same image can appear on back-to-back trials. Kurdi instead cycled through the prime set without replacement. Revisit if that matters.
 - **Key-side counterbalancing** is not implemented (D is always "Less Pleasant"). Kurdi didn't counterbalance either.
@@ -172,5 +187,5 @@ Updated 2026-10-29. Confirm with Paul before "fixing" design choices.
 - Versions are pinned in `index.html`: jspsych 8.3.0, plugin-instructions 2.1.0, plugin-html-keyboard-response 2.2.0, plugin-survey-likert 2.2.0, plugin-preload 2.1.0, plugin-fullscreen 2.1.0 (loaded, unused), extension-pipe 0.2.0. Use jsPsych **v8** docs. In v8, read timeline variables inside functions with `jsPsych.evaluateTimelineVariable('x')`. `jsPsych.timelineVariable('x')` is only for plain parameter values (as in `amp_data()`).
 - When adding or swapping primes, edit `prime_images` in `exp.js` and resize the files first. Preload and trial counts pick them up automatically (trials per category = images × `n_reps_per_prime`).
 - To test without sending data, use `?nosave` (see above). In the browser console, `practice_trials`, `amp1_trials`, `target_pool` and `jsPsych.data.get()` are handy for checking.
-- To skip ahead while testing (e.g., to reach the explicit questions), run `jsPsych.abortCurrentTimeline()` in the console during the AMP. It ends the current AMP block and moves on to the next part.
+- To skip ahead while testing, run `jsPsych.abortCurrentTimeline()` in the console **while inside an AMP or learning block**, then press a response key. In jsPsych 8 the abort only takes effect when the current trial ends, and a pending abort on a later screen (e.g., a survey page) ends the whole experiment.
 - Browsers cache `amp.css`/`exp.js` aggressively on the local server, so hard-reload after editing.

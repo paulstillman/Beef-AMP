@@ -630,3 +630,51 @@ input[type="radio"]:checked + .label:after {
     font-family: 'Open Sans', 'Arial', sans-serif;
     font-size: 20px;
 }
+
+
+/* learning phase */
+.learning_container {
+    max-width: 800px;
+    margin: auto;
+    text-align: center;
+    font-family: 'Open Sans', 'Arial', sans-serif;
+    font-size: 22px;
+}
+
+.learning_img {
+    display: block;
+    margin: 0 auto 20px;
+    max-width: 360px;
+    max-height: 270px;
+}
+
+.learning_statement {
+    font-size: 26px;
+    font-weight: bold;
+    line-height: 1.35;
+}
+
+.learning_keys {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 40px;
+    font-size: 24px;
+    font-weight: bold;
+}
+
+.learning_verdict {
+    font-size: 30px;
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+
+.learning_source {
+    font-size: 18px;
+    color: #444;
+}
+
+.learning_continue {
+    font-size: 16px;
+    color: #888;
+    margin-top: 30px;
+}

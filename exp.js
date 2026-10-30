@@ -132,13 +132,14 @@ const practice_trials = make_amp_trials('practice', jsPsych.randomization.shuffl
   practice_images.map(file => ({ prime_category: 'practice', prime_file: file }))
 ));
 const amp1_trials = make_amp_trials('amp1', main_primes());
+const amp2_trials = make_amp_trials('amp2', main_primes());
 
 
 /* ---------- trials ---------- */
 
 var preload = {
   type: jsPsychPreload,
-  images: [...practice_trials, ...amp1_trials].map(t => t.target_file)
+  images: [...practice_trials, ...amp1_trials, ...amp2_trials].map(t => t.target_file)
     .concat(Object.values(prime_images).flat(), practice_images, ['./img/fixation.png', './img/ampmask.jpg']),
 };
 timeline.push(preload);
@@ -352,40 +353,162 @@ function save_likert(shown) {
   };
 }
 
-let beef_shown = [];
-var explicit_beef = {
-  type: jsPsychSurveyLikert,
-  preamble: '<p>Please answer the following questions about beef.</p>',
-  questions: () => {
-    beef_shown = [
-      item('like', 'Overall, how much do you like or dislike beef?', like_labels),
-      ...shuffle(beef_attitude), ...shuffle(beef_ambivalence), ...shuffle(beef_other),
-    ];
-    return beef_shown;
-  },
-  scale_width: 900,
-  data: { trial_part: 'explicit' },
-  on_finish: save_likert(() => beef_shown),
+// both pages, built once per time point ('t1' after AMP 1, 't2' after AMP 2);
+// every row gets explicit_time so the two rounds can be told apart
+function make_explicit(time) {
+  let beef_shown = [];
+  const beef = {
+    type: jsPsychSurveyLikert,
+    preamble: '<p>Please answer the following questions about beef.</p>',
+    questions: () => {
+      beef_shown = [
+        item('like', 'Overall, how much do you like or dislike beef?', like_labels),
+        ...shuffle(beef_attitude), ...shuffle(beef_ambivalence), ...shuffle(beef_other),
+      ];
+      return beef_shown;
+    },
+    scale_width: 900,
+    data: { trial_part: 'explicit', explicit_time: time, explicit_page: 'beef' },
+    on_finish: save_likert(() => beef_shown),
+  };
+
+  // page 2, chicken and desserts: food order randomized, items in fixed order within each food
+  let comparison_shown = [];
+  const comparison = {
+    type: jsPsychSurveyLikert,
+    preamble: '<p>Please answer the following questions about chicken and desserts.</p>',
+    questions: () => {
+      comparison_shown = jsPsych.randomization.shuffle([
+        comparison_items('chicken', 'chicken', 'is'),
+        comparison_items('dessert', 'desserts', 'are'),
+      ]).flat();
+      return comparison_shown;
+    },
+    scale_width: 900,
+    data: { trial_part: 'explicit', explicit_time: time, explicit_page: 'comparison' },
+    on_finish: save_likert(() => comparison_shown),
+  };
+
+  return [beef, comparison];
+}
+
+timeline.push(...make_explicit('t1'));
+
+
+/* ---------- learning phase (statements: learning_statements.md -> learning_items.js) ---------- */
+
+// Kevin-style learning (Cone et al., 2019, 2021): each statement is shown under a photo of
+// beef; A = accurate, I = inaccurate; feedback says correct/incorrect plus the source.
+// Each beef AMP prime is used equally often (5 images x 6 = 30), randomly paired with statements.
+const learning_trials = (() => {
+  const reps = Math.ceil(learning_items.length / prime_images.beef.length);
+  const imgs = jsPsych.randomization.shuffle(
+    prime_images.beef.flatMap(file => Array(reps).fill(file))
+  );
+  return jsPsych.randomization.shuffle(learning_items).map((it, i) => ({
+    ...it,
+    image: imgs[i],
+    learning_trial: i + 1,
+  }));
+})();
+
+function learning_screen(image, statement, below) {
+  return `
+    <div class="learning_container">
+      <img src="${image}" class="learning_img">
+      <p class="learning_statement">${statement}</p>
+      ${below}
+    </div>`;
+}
+
+const learning_keys = `
+  <div class="learning_keys">
+    <span>A<br>Accurate</span>
+    <span>I<br>Inaccurate</span>
+  </div>`;
+
+var learning_intro = {
+  type: jsPsychHtmlKeyboardResponse,
+  stimulus: `<div class='instructions'>
+    <p>In the next part of the study, you will read a series of statements about beef.
+    Some of the statements are accurate and some are inaccurate.</p>
+    <p>For each statement, press the <b>A</b> key if you think it is <b>accurate</b>,
+    or the <b>I</b> key if you think it is <b>inaccurate</b>.</p>
+    <p>After each answer, you will find out whether you were correct.</p>
+    <p>Press the space bar to begin.</p>
+  </div>`,
+  choices: [' '],
+  data: { trial_part: 'instructions' },
 };
 
-// page 2, chicken and desserts: food order randomized, items in fixed order within each food
-let comparison_shown = [];
-var explicit_comparison = {
-  type: jsPsychSurveyLikert,
-  preamble: '<p>Please answer the following questions about chicken and desserts.</p>',
-  questions: () => {
-    comparison_shown = jsPsych.randomization.shuffle([
-      comparison_items('chicken', 'chicken', 'is'),
-      comparison_items('dessert', 'desserts', 'are'),
-    ]).flat();
-    return comparison_shown;
+function learning_data(trial_part) {
+  return {
+    trial_part: trial_part,
+    learning_trial: jsPsych.timelineVariable('learning_trial'),
+    learning_item: jsPsych.timelineVariable('item'),
+    learning_domain: jsPsych.timelineVariable('domain'),
+    learning_accurate: jsPsych.timelineVariable('accurate'),
+    learning_image: jsPsych.timelineVariable('image'),
+  };
+}
+
+var learning_statement = {
+  type: jsPsychHtmlKeyboardResponse,
+  stimulus: () => learning_screen(
+    jsPsych.evaluateTimelineVariable('image'),
+    jsPsych.evaluateTimelineVariable('statement'),
+    learning_keys),
+  choices: ['a', 'i'],
+  data: learning_data('learning'),
+  on_finish: function (data) {
+    data.said_accurate = data.response === 'a';
+    data.learning_correct = data.said_accurate === data.learning_accurate;
   },
-  scale_width: 900,
-  data: { trial_part: 'explicit' },
-  on_finish: save_likert(() => comparison_shown),
 };
 
-timeline.push(explicit_beef, explicit_comparison);
+var learning_feedback = {
+  type: jsPsychHtmlKeyboardResponse,
+  stimulus: () => {
+    const correct = jsPsych.data.get().last(1).values()[0].learning_correct;
+    const accurate = jsPsych.evaluateTimelineVariable('accurate');
+    return learning_screen(
+      jsPsych.evaluateTimelineVariable('image'),
+      jsPsych.evaluateTimelineVariable('statement'),
+      `<p class="learning_verdict" style="color:${correct ? 'blue' : 'red'};">${correct ? 'Correct' : 'Incorrect'}</p>
+       <p>This statement is ${accurate ? 'accurate' : 'inaccurate'}.</p>
+       <p class="learning_source">Source: ${jsPsych.evaluateTimelineVariable('source')}</p>
+       <p class="learning_continue">Press the space bar to continue.</p>`);
+  },
+  choices: [' '],
+  data: learning_data('learning_feedback'),
+};
+
+timeline.push(learning_intro, {
+  timeline: [learning_statement, learning_feedback],
+  timeline_variables: learning_trials,
+});
+
+
+/* ---------- AMP 2 and explicit attitudes, Time 2 ---------- */
+
+// no practice the second time; brief reminder of the AMP instructions
+var amp2_intro = {
+  type: jsPsychHtmlKeyboardResponse,
+  stimulus: `<div class='instructions'>
+    <p>You will now do the picture task from earlier one more time.</p>
+    <p>As before, you will see a real-life image followed by an abstract painting.
+    The first image is simply a warning signal and should be ignored.
+    Your task is to judge how visually pleasant each abstract painting is.</p>
+    <p>If the abstract painting is less visually pleasant than average, press the <b>D</b> key.
+    If it is more visually pleasant than average, press the <b>K</b> key.</p>
+    <p>Please try your absolute best not to let the real-life images bias your judgment of the abstract paintings.</p>
+    <p>Ready? Press the space bar to begin.</p>
+  </div>`,
+  choices: [' '],
+  data: { trial_part: 'instructions' },
+};
+
+timeline.push(amp2_intro, make_amp_block(amp2_trials), ...make_explicit('t2'));
 
 
 /* ---------- end of study (asked once) ---------- */
