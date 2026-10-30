@@ -754,3 +754,13 @@ ul.jspsych-survey-likert-opts li input[type="radio"] {
 .instructions p { font-family: inherit; }
 
 .instr_example { display: block; margin: 20px auto; width: 260px; height: 260px; border: 2px solid #ccc; }
+
+/* comprehension check (multi-choice): undo the global `input` size rule so each
+   radio button sits right next to its label */
+div.jspsych-survey-multi-choice-option label.jspsych-survey-multi-choice-text input[type="radio"] {
+    width: 18px;
+    height: 18px;
+    margin: 0 8px 0 0;
+    vertical-align: middle;
+}
+.jspsych-survey-multi-choice-option label { vertical-align: middle; }
