@@ -19,11 +19,13 @@ for m in re.finditer(r'^\*\*([EHA])(\d+)\.\*\* (.+)\n((?:- .*\n?)+)', md, re.M):
     letter, num, statement, fields = m.groups()
     answer = re.search(r'^- Answer: (\w+)', fields, re.M).group(1).lower()
     source = re.search(r'^- Feedback source: (.+)$', fields, re.M).group(1)
+    explainer = re.search(r'^- Explainer: (.+)$', fields, re.M)
     items.append({
         'item': f'{letter}{num}',
         'domain': DOMAINS[letter],
         'statement': html(statement),
         'accurate': answer == 'accurate',
+        'explainer': html(explainer.group(1)) if explainer else '',
         'source': html(source),
     })
 

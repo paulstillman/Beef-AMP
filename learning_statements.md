@@ -11,7 +11,7 @@ Beef version (proposal; edit as needed):
 - **Statements carry the content.** Numbers go in the statement itself, so participants don't have to read much more in the feedback. Health statements give actual figures, not just "more"/"less".
 - **Response:** **A** = accurate, **I** = inaccurate (decided 2026-10-29).
 - **Image:** each statement is shown under a photo of beef, as the Kevin task showed Kevin's photo. The 5 beef AMP primes are each used 6 times (30 trials), randomly paired with statements for each participant.
-- **Feedback (kept short):** "Correct" in blue or "Incorrect" in red, then one line: "This statement is accurate." or "This statement is inaccurate.", then **Source: …** (the "Feedback source" line for each item). It can be expanded later if needed.
+- **Feedback (kept short):** "Correct" in blue or "Incorrect" in red, then "This statement is accurate." or "This statement is inaccurate.", then the item's **Explainer** if it has one (all inaccurate items do, saying briefly why it's wrong; accurate items don't), then **Source: …** (the "Feedback source" line).
 - **Order:** random for each participant, with all domains mixed.
 - **Length target:** about 10–25 words per statement. Kevin's were about 8–15.
 
@@ -67,23 +67,28 @@ The drafts below avoid these. Keep them out unless a source turns up.
 
 **E6.** A beef burger produces fewer greenhouse gas emissions than a veggie burger.
 - Answer: Inaccurate
+- Explainer: Beef burgers produce 25 times more emissions.
 - Feedback source: Poore & Nemecek (2018), *Science*
 
 **E7.** A serving of beef produces fewer greenhouse gas emissions than a serving of chicken breast.
 - Answer: Inaccurate
+- Explainer: Beef produces nearly 10 times more emissions.
 - Feedback source: Poore & Nemecek (2018), *Science*
 
 **E8.** Beef and pork produce about the same greenhouse gas emissions per serving.
 - Answer: Inaccurate
+- Explainer: Beef produces almost 7 times more emissions.
 - Feedback source: Poore & Nemecek (2018), *Science*
 - Notes: beef 5,000 g vs. pulled pork 740 g (6.8×).
 
 **E9.** Raising cattle for beef has helped protect the Amazon rainforest from deforestation.
 - Answer: Inaccurate
+- Explainer: Beef ranching drives about 80% of Amazon deforestation.
 - Feedback source: World Resources Institute / Global Forest Watch
 
 **E10.** In the U.S., beef production uses only a small share of the country's farmland.
 - Answer: Inaccurate
+- Explainer: Beef uses about half of all U.S. farmland.
 - Feedback source: Michael Grunwald, *We Are Eating the Earth* (2025)
 - Notes: as E5 (about 50% of U.S. agricultural land).
 
@@ -122,24 +127,29 @@ The drafts below avoid these. Keep them out unless a source turns up.
 
 **H6.** Eating beef every day lowers your risk of heart disease.
 - Answer: Inaccurate
+- Explainer: Daily red meat raises heart disease death risk by 18%.
 - Feedback source: Harvard School of Public Health (Pan et al., 2012)
 
 **H7.** Health guidelines recommend eating red meat every day as part of a healthy diet.
 - Answer: Inaccurate
+- Explainer: Guidelines recommend limiting red meat.
 - Feedback source: World Cancer Research Fund; American Heart Association
 - Notes: WCRF recommends no more than about 3 portions (350–500 g cooked) of red meat per week.
 
 **H8.** Eating a serving of red meat every day is linked to a longer life.
 - Answer: Inaccurate
+- Explainer: Daily red meat raises early death risk by 13%.
 - Feedback source: Harvard School of Public Health (Pan et al., 2012)
 - Notes: as H4 (+13% risk of early death per daily serving).
 
 **H9.** Eating red meat has been shown to protect against colorectal cancer.
 - Answer: Inaccurate
+- Explainer: Red meat raises colorectal cancer risk.
 - Feedback source: World Health Organization, International Agency for Research on Cancer (2015)
 
 **H10.** Beef is a low-fat food that helps lower cholesterol.
 - Answer: Inaccurate
+- Explainer: Beef is high in saturated fat, which raises cholesterol.
 - Feedback source: U.S. Department of Agriculture; Dietary Guidelines for Americans
 
 ---
@@ -177,24 +187,29 @@ The drafts below avoid these. Keep them out unless a source turns up.
 
 **A6.** Federal law requires that beef cattle be given pain relief before being castrated or branded.
 - Answer: Inaccurate
+- Explainer: No federal law requires pain relief.
 - Feedback source: American Veterinary Medical Association
 - Notes: no such federal requirement exists.
 
 **A7.** The federal Animal Welfare Act protects cattle raised for beef.
 - Answer: Inaccurate
+- Explainer: The Act excludes farm animals raised for food.
 - Feedback source: U.S. federal law (Animal Welfare Act)
 - Notes: 7 U.S.C. § 2132(g) excludes farm animals used for food.
 
 **A8.** Most U.S. beef cattle live their entire lives grazing on open pasture.
 - Answer: Inaccurate
+- Explainer: Most spend their final months in crowded feedlots.
 - Feedback source: U.S. Department of Agriculture
 
 **A9.** Beef cattle typically live into old age before being slaughtered.
 - Answer: Inaccurate
+- Explainer: Most are slaughtered before age two.
 - Feedback source: U.S. Department of Agriculture
 
 **A10.** Beef cattle feel little pain, so procedures like branding cause them minimal distress.
 - Answer: Inaccurate
+- Explainer: Cattle feel pain; branding causes clear distress.
 - Feedback source: American Veterinary Medical Association
 - Notes: studies of pain behavior and cortisol after hot-iron branding (e.g., Schwartzkopf-Genswein et al.).
 

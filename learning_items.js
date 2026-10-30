@@ -5,6 +5,7 @@ var learning_items = [
     "domain": "environment",
     "statement": "A beef burger produces about 5,000 grams of greenhouse gas emissions, 25 times more than a veggie burger (about 200 grams).",
     "accurate": true,
+    "explainer": "",
     "source": "Poore & Nemecek (2018), <i>Science</i>"
   },
   {
@@ -12,6 +13,7 @@ var learning_items = [
     "domain": "environment",
     "statement": "A serving of beef produces nearly 10 times the greenhouse gas emissions of a serving of chicken breast (about 5,000 vs. 540 grams).",
     "accurate": true,
+    "explainer": "",
     "source": "Poore & Nemecek (2018), <i>Science</i>"
   },
   {
@@ -19,6 +21,7 @@ var learning_items = [
     "domain": "environment",
     "statement": "Cattle raised for beef release large amounts of methane, a gas that traps about 80 times more heat than carbon dioxide.",
     "accurate": true,
+    "explainer": "",
     "source": "Intergovernmental Panel on Climate Change (2021)"
   },
   {
@@ -26,6 +29,7 @@ var learning_items = [
     "domain": "environment",
     "statement": "Raising cattle for beef is linked to about 80% of the deforestation in the Amazon rainforest.",
     "accurate": true,
+    "explainer": "",
     "source": "World Resources Institute / Global Forest Watch"
   },
   {
@@ -33,6 +37,7 @@ var learning_items = [
     "domain": "environment",
     "statement": "In the U.S., about half of all farmland is used to produce beef, yet beef provides only about 3% of Americans' calories.",
     "accurate": true,
+    "explainer": "",
     "source": "Michael Grunwald, <i>We Are Eating the Earth</i> (2025)"
   },
   {
@@ -40,6 +45,7 @@ var learning_items = [
     "domain": "environment",
     "statement": "A beef burger produces fewer greenhouse gas emissions than a veggie burger.",
     "accurate": false,
+    "explainer": "Beef burgers produce 25 times more emissions.",
     "source": "Poore & Nemecek (2018), <i>Science</i>"
   },
   {
@@ -47,6 +53,7 @@ var learning_items = [
     "domain": "environment",
     "statement": "A serving of beef produces fewer greenhouse gas emissions than a serving of chicken breast.",
     "accurate": false,
+    "explainer": "Beef produces nearly 10 times more emissions.",
     "source": "Poore & Nemecek (2018), <i>Science</i>"
   },
   {
@@ -54,6 +61,7 @@ var learning_items = [
     "domain": "environment",
     "statement": "Beef and pork produce about the same greenhouse gas emissions per serving.",
     "accurate": false,
+    "explainer": "Beef produces almost 7 times more emissions.",
     "source": "Poore & Nemecek (2018), <i>Science</i>"
   },
   {
@@ -61,6 +69,7 @@ var learning_items = [
     "domain": "environment",
     "statement": "Raising cattle for beef has helped protect the Amazon rainforest from deforestation.",
     "accurate": false,
+    "explainer": "Beef ranching drives about 80% of Amazon deforestation.",
     "source": "World Resources Institute / Global Forest Watch"
   },
   {
@@ -68,6 +77,7 @@ var learning_items = [
     "domain": "environment",
     "statement": "In the U.S., beef production uses only a small share of the country's farmland.",
     "accurate": false,
+    "explainer": "Beef uses about half of all U.S. farmland.",
     "source": "Michael Grunwald, <i>We Are Eating the Earth</i> (2025)"
   },
   {
@@ -75,6 +85,7 @@ var learning_items = [
     "domain": "health",
     "statement": "The World Health Organization classifies red meat, including beef, as \"probably cancer-causing\" to humans.",
     "accurate": true,
+    "explainer": "",
     "source": "World Health Organization, International Agency for Research on Cancer (2015)"
   },
   {
@@ -82,6 +93,7 @@ var learning_items = [
     "domain": "health",
     "statement": "Each 100 grams of red meat eaten per day (about one burger patty) is linked to a 17% increase in colorectal cancer risk.",
     "accurate": true,
+    "explainer": "",
     "source": "World Health Organization, International Agency for Research on Cancer (2015)"
   },
   {
@@ -89,6 +101,7 @@ var learning_items = [
     "domain": "health",
     "statement": "Each 100 grams of red meat eaten per day is linked to a 10% increase in type 2 diabetes risk.",
     "accurate": true,
+    "explainer": "",
     "source": "Li et al. (2024), <i>The Lancet Diabetes & Endocrinology</i>"
   },
   {
@@ -96,6 +109,7 @@ var learning_items = [
     "domain": "health",
     "statement": "Eating one serving of red meat a day is linked to a 13% increase in the risk of early death and an 18% increase in the risk of dying from heart disease.",
     "accurate": true,
+    "explainer": "",
     "source": "Harvard School of Public Health (Pan et al., 2012)"
   },
   {
@@ -103,6 +117,7 @@ var learning_items = [
     "domain": "health",
     "statement": "A quarter-pound beef burger has about 9 grams of saturated fat, nearly half the recommended daily limit.",
     "accurate": true,
+    "explainer": "",
     "source": "U.S. Department of Agriculture; Dietary Guidelines for Americans"
   },
   {
@@ -110,6 +125,7 @@ var learning_items = [
     "domain": "health",
     "statement": "Eating beef every day lowers your risk of heart disease.",
     "accurate": false,
+    "explainer": "Daily red meat raises heart disease death risk by 18%.",
     "source": "Harvard School of Public Health (Pan et al., 2012)"
   },
   {
@@ -117,6 +133,7 @@ var learning_items = [
     "domain": "health",
     "statement": "Health guidelines recommend eating red meat every day as part of a healthy diet.",
     "accurate": false,
+    "explainer": "Guidelines recommend limiting red meat.",
     "source": "World Cancer Research Fund; American Heart Association"
   },
   {
@@ -124,6 +141,7 @@ var learning_items = [
     "domain": "health",
     "statement": "Eating a serving of red meat every day is linked to a longer life.",
     "accurate": false,
+    "explainer": "Daily red meat raises early death risk by 13%.",
     "source": "Harvard School of Public Health (Pan et al., 2012)"
   },
   {
@@ -131,6 +149,7 @@ var learning_items = [
     "domain": "health",
     "statement": "Eating red meat has been shown to protect against colorectal cancer.",
     "accurate": false,
+    "explainer": "Red meat raises colorectal cancer risk.",
     "source": "World Health Organization, International Agency for Research on Cancer (2015)"
   },
   {
@@ -138,6 +157,7 @@ var learning_items = [
     "domain": "health",
     "statement": "Beef is a low-fat food that helps lower cholesterol.",
     "accurate": false,
+    "explainer": "Beef is high in saturated fat, which raises cholesterol.",
     "source": "U.S. Department of Agriculture; Dietary Guidelines for Americans"
   },
   {
@@ -145,6 +165,7 @@ var learning_items = [
     "domain": "animal_welfare",
     "statement": "In feedlots, beef cattle may get as little as 150 square feet each (about one parking space) for their final months.",
     "accurate": true,
+    "explainer": "",
     "source": "Iowa State University Extension"
   },
   {
@@ -152,6 +173,7 @@ var learning_items = [
     "domain": "animal_welfare",
     "statement": "Calves raised for beef are routinely castrated, often without any pain relief.",
     "accurate": true,
+    "explainer": "",
     "source": "U.S. Department of Agriculture; American Veterinary Medical Association"
   },
   {
@@ -159,6 +181,7 @@ var learning_items = [
     "domain": "animal_welfare",
     "statement": "Beef cattle in feedlots often stand in mud and manure several inches deep.",
     "accurate": true,
+    "explainer": "",
     "source": "University of Nebraska Extension"
   },
   {
@@ -166,6 +189,7 @@ var learning_items = [
     "domain": "animal_welfare",
     "statement": "In the U.S., beef cattle can legally be transported for up to 28 hours without food, water or rest.",
     "accurate": true,
+    "explainer": "",
     "source": "U.S. federal law (Twenty-Eight Hour Law)"
   },
   {
@@ -173,6 +197,7 @@ var learning_items = [
     "domain": "animal_welfare",
     "statement": "About 1 in 5 beef cattle finished in feedlots have liver abscesses at slaughter, largely caused by their high-grain diet.",
     "accurate": true,
+    "explainer": "",
     "source": "National fed-beef liver audit; Oklahoma State University Extension"
   },
   {
@@ -180,6 +205,7 @@ var learning_items = [
     "domain": "animal_welfare",
     "statement": "Federal law requires that beef cattle be given pain relief before being castrated or branded.",
     "accurate": false,
+    "explainer": "No federal law requires pain relief.",
     "source": "American Veterinary Medical Association"
   },
   {
@@ -187,6 +213,7 @@ var learning_items = [
     "domain": "animal_welfare",
     "statement": "The federal Animal Welfare Act protects cattle raised for beef.",
     "accurate": false,
+    "explainer": "The Act excludes farm animals raised for food.",
     "source": "U.S. federal law (Animal Welfare Act)"
   },
   {
@@ -194,6 +221,7 @@ var learning_items = [
     "domain": "animal_welfare",
     "statement": "Most U.S. beef cattle live their entire lives grazing on open pasture.",
     "accurate": false,
+    "explainer": "Most spend their final months in crowded feedlots.",
     "source": "U.S. Department of Agriculture"
   },
   {
@@ -201,6 +229,7 @@ var learning_items = [
     "domain": "animal_welfare",
     "statement": "Beef cattle typically live into old age before being slaughtered.",
     "accurate": false,
+    "explainer": "Most are slaughtered before age two.",
     "source": "U.S. Department of Agriculture"
   },
   {
@@ -208,6 +237,7 @@ var learning_items = [
     "domain": "animal_welfare",
     "statement": "Beef cattle feel little pain, so procedures like branding cause them minimal distress.",
     "accurate": false,
+    "explainer": "Cattle feel pain; branding causes clear distress.",
     "source": "American Veterinary Medical Association"
   }
 ];

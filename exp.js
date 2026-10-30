@@ -479,6 +479,7 @@ var learning_feedback = {
       jsPsych.evaluateTimelineVariable('statement'),
       `<p class="learning_verdict" style="color:${correct ? 'blue' : 'red'};">${correct ? 'Correct' : 'Incorrect'}</p>
        <p>This statement is ${accurate ? 'accurate' : 'inaccurate'}.</p>
+       ${jsPsych.evaluateTimelineVariable('explainer') ? `<p class="learning_explainer">${jsPsych.evaluateTimelineVariable('explainer')}</p>` : ''}
        <p class="learning_source">Source: ${jsPsych.evaluateTimelineVariable('source')}</p>
        <p class="learning_continue">Press the space bar to continue.</p>`);
   },

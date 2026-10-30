@@ -660,7 +660,13 @@ ul.jspsych-survey-likert-opts li input[type="radio"] {
 /* same fixed height on the statement and feedback screens, so the image and statement
    don't move when the feedback replaces the key labels */
 .learning_below {
-    height: 230px;
+    height: 290px;
+}
+
+.learning_explainer {
+    font-size: 20px;
+    max-width: 700px;
+    margin: 8px auto;
 }
 
 .learning_keys {
