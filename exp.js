@@ -1,7 +1,15 @@
-
-// add ?nosave to the URL when testing: nothing is sent to DataPipe and the
-// raw data is shown at the end instead
+// add ?nosave to the URL when testing: nothing is sent to DataPipe, there is no
+// redirect, and the raw data is shown at the end instead
 const NOSAVE = new URLSearchParams(location.search).has('nosave');
+
+/* ---------- lab session router (see AGENTS.md, "Lab router") ---------- */
+
+// The router sends participants here with ?pid=...; at the end we send them back with
+// ?from=<SURVEY_ID>&pid=<pid>, like every Qualtrics study does with its own SurveyID.
+// SURVEY_ID is our fixed stand-in for a Qualtrics SV_ ID: list this study in the lab sheet as
+// https://paulstillman.github.io/Beef-AMP/?study=SV_BeefAMP so the router can recognize it.
+const SURVEY_ID = 'SV_BeefAMP';
+const ROUTER_URL = 'https://bostonu.qualtrics.com/jfe/form/SV_bPg2NmkSI0V5hwW';
 
 // DataPipe (Google Drive) via the pipe extension: each trial is streamed as it
 // happens, and the full CSV is submitted when the experiment ends
@@ -11,22 +19,31 @@ const jsPsych = initJsPsych({
       type: jsPsychExtensionPipe,
       params: {
         experiment_id: "4OEY2BEtOzsk",
-        filename: () => `${sub_id}.csv`,
+        filename: () => `${pid}.csv`,
         enabled: !NOSAVE,
       },
     },
   ],
+  // runs after the extension has finished uploading
   on_finish: function () {
-    if (NOSAVE) jsPsych.data.displayData();
+    const redirect = `${ROUTER_URL}?from=${SURVEY_ID}&pid=${encodeURIComponent(pid)}`;
+    if (NOSAVE) {
+      jsPsych.data.displayData();
+      console.log('would redirect to:', redirect);
+    } else {
+      window.location.href = redirect;
+    }
   },
 });
 
 
-let sub_id = jsPsych.data.getURLVariable('workerId');
-if (sub_id === undefined) {
-  sub_id = jsPsych.randomization.randomID(10);
+// pid comes from the router; if missing, make one with the SG_ (self-generated) prefix
+let pid = jsPsych.data.getURLVariable('pid');
+const pid_source = pid ? 'url' : 'self_generated';
+if (!pid) {
+  pid = `SG_${jsPsych.randomization.randomID(12)}`;
 }
-jsPsych.data.addProperties({ subject_id: sub_id });
+jsPsych.data.addProperties({ pid: pid, pid_source: pid_source, survey_id: SURVEY_ID });
 
 
 let timeline = [];

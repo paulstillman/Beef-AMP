@@ -14,12 +14,12 @@ There is no build step, package manager, or test suite. Everything is plain HTML
 
 ## Status / where to pick up (last updated 2026-10-29)
 
-- **Live:** https://paulstillman.github.io/Beef-AMP/ (deploys from `main`). Test URL: https://paulstillman.github.io/Beef-AMP/?workerId=test&nosave
+- **Live:** https://paulstillman.github.io/Beef-AMP/ (deploys from `main`). Test URL: https://paulstillman.github.io/Beef-AMP/?pid=TEST_paul&nosave
 - **Last verified (commit `524a8fb`, 2026-10-28):** the live site was run with `?nosave`. All images load from GitHub Pages, instructions → ready screen → AMP trials work, and responses land correctly on target or mask rows. A full 60-trial local run gave 20/20/20 trials, each prime image exactly 4 times, and 60 unique targets.
 - **Kurdi timings switched on (2026-10-29):** fixation 500 → prime 100 → blank 100 → target 100 → mask until response. A full 60-trial local `?nosave` run measured fixation ~509 ms and prime/blank/target ~105 ms each (the extra ~5 ms is jsPsych overhead). Not yet checked on the live site.
-- **Not yet verified:** a *real* save to Google Drive. Do one full run without `?nosave`, confirm `<workerId>.csv` appears in the DataPipe Drive folder, then delete it. Data collection must be switched on for the experiment in the DataPipe dashboard.
+- **Not yet verified:** a *real* save to Google Drive. Do one full run without `?nosave`, confirm `<pid>.csv` appears in the DataPipe Drive folder, then delete it. Data collection must be switched on for the experiment in the DataPipe dashboard.
 - **Possible stray file:** a local preview briefly loaded the page without `?nosave` on 2026-10-28, so a small `*.partial.json` may be in the Drive folder. It's safe to delete.
-- **Next likely tasks:** learning phase (waiting on Paul's fact document), AMP 2 + explicit Time 2 (with a `phase`/time column on explicit rows), consent text, end-of-study redirect, consent/debrief, and the pre-AMP messages/manipulation.
+- **Next likely tasks:** learning phase (waiting on Paul's fact document), AMP 2 + explicit Time 2 (with a `phase`/time column on explicit rows), consent text, debrief, and the pre-AMP messages/manipulation.
 
 ## Overall study flow (Paul, 2026-10-29)
 
@@ -56,7 +56,7 @@ Decisions (Paul, 2026-10-28):
 
 Still undecided (ask Paul before doing):
 - (Decided 2026-10-29: 5 practice trials before AMP 1 only, primes A–E from the Commons shortlist, now in `img/practice/`.)
-- Where participants go when they finish (redirect URL).
+- (Decided 2026-10-29: participants come from and return to the lab's Qualtrics session router. See "Lab router".)
 
 ## Reference procedure: Kurdi et al. (2023), *Behavior Research Methods* 56:3161–3194
 
@@ -101,7 +101,7 @@ All primes are ≤480 px on the longest side.
 ## Current experiment flow (`exp.js`)
 
 1. `initJsPsych` registers the DataPipe extension (see "Data saving" below). `on_finish` shows the raw data only when `?nosave` is in the URL. Otherwise participants see the extension's "Saving data…" then "Done. You may close this page." messages.
-2. Subject ID from URL param `workerId`, else a random 10-char ID. Stored as `subject_id`; data filename is `${sub_id}.csv`.
+2. `pid` comes from the URL (sent by the lab router). If it's missing, it's self-generated as `SG_` + 12 random characters. Every row gets `pid`, `pid_source` (`url`/`self_generated`) and `survey_id` (`SV_BeefAMP`). The data file is `${pid}.csv`.
 3. Settings: `timing` (Kurdi values: fixation 500 ms, prime 100 ms, blank 100 ms, target 100 ms, mask until response), `n_reps_per_prime = 4`, `prime_images` (category → file list).
 4. Trial lists, built before the timeline by `make_amp_trials(block_name, primes)`:
    - `practice_trials`: the 5 `practice_images` (plates/silverware, `prime_category: 'practice'`), each once, in random order. **Before AMP 1 only.**
@@ -134,10 +134,20 @@ Modeled on the Kevin studies' six-item composite: a "likeable" item (1 = very un
 
 - DataPipe experiment ID **`4OEY2BEtOzsk`** (Google Drive storage, created 2026-10-28). Files land in a folder for the experiment under `My Drive/DataPipe/` (or a parent folder Paul chose), in `data/`.
 - The old OSF experiment `0fKnOsyHzKUQ` is retired. DataPipe stops writing to OSF after 2026-11-16. Anything it collected stays on OSF.
-- Uses `@jspsych/extension-pipe@0.2.0`, registered in `initJsPsych({ extensions: [...] })`. It **streams each trial** as it finishes, then submits `${sub_id}.csv` at the end. A participant who quits partway leaves a `<filename>-<id>.partial.json` file instead. Treat those as non-completers in analysis, and mention partial-data retention in the IRB protocol.
+- Uses `@jspsych/extension-pipe@0.2.0`, registered in `initJsPsych({ extensions: [...] })`. It **streams each trial** as it finishes, then submits `${pid}.csv` at the end. A participant who quits partway leaves a `<filename>-<id>.partial.json` file instead. Treat those as non-completers in analysis, and mention partial-data retention in the IRB protocol.
 - **`?nosave` URL flag** sets the extension's `enabled: false`: no session, no streaming, no submission. Use it for all testing.
 - The extension and jsPsych 8 go together. The old `@jspsych-contrib/plugin-pipe` save trial is gone, and versions ≥0.5 of that plugin need jsPsych 8 anyway.
 - Docs: https://pipe.jspsych.org/docs (see "What's changed", "Saving as you go").
+
+### Lab router (Qualtrics)
+
+Participants run in the lab's Qualtrics **session router** (Paul's `qualtrics-router` skill; the router's own docs are in that skill). The router chains each week's studies from a Google Sheet and passes a `pid` (the router's Response ID, or `PREVIEW_R_...` for preview runs) to each study.
+- **In:** the router sends participants to this study's link with `?pid=...` (sometimes plus `&Q_CHL=preview`, which we ignore).
+- **Out:** `on_finish` (which runs after the DataPipe upload completes) redirects to `ROUTER_URL?from=SV_BeefAMP&pid=<pid>`. With `?nosave` it shows the data and logs the would-be redirect to the console instead.
+- **`SURVEY_ID = 'SV_BeefAMP'`** is a fixed made-up ID standing in for a Qualtrics SurveyID, because the router identifies studies by an `SV_\w+` match in their sheet link. **The sheet's Study Link for this study must be `https://paulstillman.github.io/Beef-AMP/?study=SV_BeefAMP`.** The router finds `SV_BeefAMP` in the query string, strips the query, and sends people to the bare link plus `?pid=...`. Don't change the ID without updating the sheet.
+- `ROUTER_URL` = `https://bostonu.qualtrics.com/jfe/form/SV_bPg2NmkSI0V5hwW` (from the router config in Dropbox at `LLM_projects/qualtrics_router/router_config.json`).
+- Self-generated `SG_` pids (no router) still redirect to the router. With an unknown pid it just records the hop and sends them to the final (demographics) survey.
+- Preview runs (`pid` starting `PREVIEW_`) **do** save to Drive. Filter them out in analysis.
 
 ### Data columns added by the AMP
 
@@ -151,13 +161,12 @@ Updated 2026-10-29. Confirm with Paul before "fixing" design choices.
 - **No consent or debrief.** AMP instructions are in (see flow step 6).
 - **Prime repeats aren't spread out.** The 60 trials are fully shuffled, so the same image can appear on back-to-back trials. Kurdi instead cycled through the prime set without replacement. Revisit if that matters.
 - **Key-side counterbalancing** is not implemented (D is always "Less Pleasant"). Kurdi didn't counterbalance either.
-- **No end-of-study redirect** (e.g. back to Qualtrics/Prolific). Add it in `on_finish`; the extension finishes uploading before `on_finish` runs.
 - **Unused files:** `targets.js` (still loaded by `index.html`), `exp_old_working.js`, the commented-out canvas demo in `index.html`, and most of `amp.css`.
 - `amp.css` imports Google Fonts over `http://`, which browsers block as mixed content on GitHub Pages (https). Harmless, since text falls back to Open Sans/Arial, but worth cleaning up.
 
 ## Conventions / how to work here
 
-- **Local testing:** serve the folder over HTTP (e.g. `python3 -m http.server`) and open `http://localhost:8000/?workerId=test&nosave`. **Always include `nosave`**: without it, merely loading the page opens a real DataPipe session and starts streaming trials into Paul's Drive. Note that the preview server in `.claude/launch.json` opens the bare URL first, so navigate to the `?nosave` URL right away.
+- **Local testing:** serve the folder over HTTP (e.g. `python3 -m http.server`) and open `http://localhost:8000/?pid=TEST_paul&nosave`. **Always include `nosave`**: without it, merely loading the page opens a real DataPipe session and starts streaming trials into Paul's Drive. Note that the preview server in `.claude/launch.json` opens the bare URL first, so navigate to the `?nosave` URL right away.
 - **Deployment:** push to `main`; GitHub Pages serves the repo root. All paths are relative (`./img/...`), so keep them that way.
 - Code style in `exp.js`: plain globals, `var`/`let` mixed, timeline objects pushed to `timeline` one at a time. Match it unless refactoring on purpose.
 - Versions are pinned in `index.html`: jspsych 8.3.0, plugin-instructions 2.1.0, plugin-html-keyboard-response 2.2.0, plugin-survey-likert 2.2.0, plugin-preload 2.1.0, plugin-fullscreen 2.1.0 (loaded, unused), extension-pipe 0.2.0. Use jsPsych **v8** docs. In v8, read timeline variables inside functions with `jsPsych.evaluateTimelineVariable('x')`. `jsPsych.timelineVariable('x')` is only for plain parameter values (as in `amp_data()`).
